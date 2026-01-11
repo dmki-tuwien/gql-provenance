@@ -1,4 +1,4 @@
-# PGProv Provenance for Property Graph Queries: Why, Where and How? 
+# PGProv : Provenance for Property Graph Queries
 
 ## Overview
 

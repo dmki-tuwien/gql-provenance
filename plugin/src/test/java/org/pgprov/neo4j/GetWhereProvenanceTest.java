@@ -17,7 +17,7 @@ public class GetWhereProvenanceTest {
 
     private Driver driver;
     private Neo4j embeddedDatabaseServer;
-    private String provModel = "Where";
+    private final String provModel = "Where";
 
     @BeforeAll
     void initializeNeo4j() {

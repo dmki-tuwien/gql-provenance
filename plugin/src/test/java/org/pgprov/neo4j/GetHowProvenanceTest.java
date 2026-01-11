@@ -17,7 +17,7 @@ public class GetHowProvenanceTest {
 
     private Driver driver;
     private Neo4j embeddedDatabaseServer;
-    private String provModel = "How";
+    private final String provModel = "How";
 
     @BeforeAll
     void initializeNeo4j() {

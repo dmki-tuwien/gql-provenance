@@ -15,7 +15,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class GQLQueryRewriteTests {
 
-    private GQLQueryProcessor getProcessorAtTranslationStage(GQLParser parser, CommonTokenStream tokenStream, ParseTree tree, String query) {
+    private GQLQueryProcessor getProcessorAtTranslationStage(GQLParser parser, CommonTokenStream tokenStream, ParseTree tree) {
 
         GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION);
         System.out.println(tree.toStringTree(parser));
@@ -32,7 +32,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -50,7 +50,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -68,7 +68,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -86,7 +86,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -103,7 +103,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -121,7 +121,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -139,7 +139,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -161,7 +161,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -186,7 +186,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -208,7 +208,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -231,7 +231,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -258,7 +258,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -283,7 +283,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -305,7 +305,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -323,7 +323,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -345,7 +345,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -370,7 +370,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -388,7 +388,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -409,7 +409,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -436,7 +436,7 @@ public class GQLQueryRewriteTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GQLParser parser = new GQLParser(tokenStream);
         ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree, query);
+        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
