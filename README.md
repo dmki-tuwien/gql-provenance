@@ -1,19 +1,30 @@
-# DMKI Template Repo
+# PGProv Provenance for Property Graph Queries: Why, Where and How? 
 
-The README.md file is the first file users of your software will see. In order to create a good first expression on users and to ease the use of the software the README.md file should contain:
+## Overview
 
-* A very short (ideally 1-2 sentences) *description* of what the software contained in the repository does.
-* A *getting started* section which explains how to use the software in practice within a few easy steps (e.g., pull docker container, and run it). This should also state how tests and experiments can be repeated.
-* A link to the actual in-depth *documentation* of the source code. This documentation should be based on inline comments in the code as well as extra content located in the folder [`docs`](docs) explaining details.
-* A *development* section that describes how to set up a development environment in order to be able to contribute.
+**PGProv** is a Java library that can be used to add provenance support for GQL-compliant graph databases.
+Provenance captures the data and transformations that contributed to a particular query result.
+A GQL query in a graph database results in a relation and with PGProv, 
+for each row in a GQL query result we capture the provenance details for each result.
 
-Use a *`.gitignore`* file to remove caches, configuration files of IDEs, or sensitive variables, such as API keys, etc.
-For a tidy project structure, on the top level of the repository only a limited number of files should be located. 
-Please use the folders provided:
-* `src` for source code
-* `docs` for documentation
-* `data` for data sets
+## Getting Started
 
-Please do not forget to fill in the placeholders at the very top of the [license file](LICENSE.txt)!
+### Prerequisites
+* Maven
+* Java
 
-The repository and the software contained in it should have an easy to memorize name, which needs to be agreed upon with your supervisor. 
+This repository contains 
+* PGProv as a library
+
+1. Run the following script to generate the executable parser code for GQL with Antlr
+```
+cd gql
+./parser-generator.sh
+```
+* Neo4j plugin implementation which uses PGProv
+2. Build both pgprov core and neo4j plugin
+```
+mvn clean package
+```
+
+## Development

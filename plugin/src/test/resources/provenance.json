@@ -1,0 +1,311 @@
+{
+  "simpleQuery": {
+    "query": "MATCH (n:Person) RETURN n.name",
+    "test-value": [
+      {
+        "result": {
+          "n.name" : "Alice"
+        },
+        "why-prov": [
+          ["n1001", "k2001","l4001"]
+        ],
+        "how-prov": "(n1001+k2001+l4001)",
+        "where-prov": {
+          "n.name": ["k2001"]
+        }
+      },
+      {
+        "result": {
+          "n.name" : "Bob"
+        },
+        "why-prov": [
+          ["n1002", "k2002","l4002"]
+        ],
+        "how-prov": "(n1002+k2002+l4002)",
+        "where-prov": {
+          "n.name": ["k2002"]
+        }
+      },
+      {
+        "result": {
+          "n.name" : "Charlie"
+        },
+        "why-prov": [
+          ["n1003", "k2003","l4003"]
+        ],
+        "how-prov": "(n1003+l4003+k2003)",
+        "where-prov": {
+          "n.name": ["k2003"]
+        }
+      },
+      {
+        "result": {
+          "n.name" : "Dan"
+        },
+        "why-prov": [
+          ["n1004", "k2004","l4004"]
+        ],
+        "how-prov": "(n1004+k2004+l4004)",
+        "where-prov": {
+          "n.name": ["k2004"]
+        }
+      },
+      {
+        "result": {
+          "n.name" : "Evan"
+        },
+        "why-prov": [
+          ["n1005", "k2005","l4005"]
+        ],
+        "how-prov": "(n1005+k2005+l4005)",
+        "where-prov": {
+          "n.name": ["k2005"]
+        }
+      }
+    ]
+  },
+  "simpleQueryWithRenaming": {
+    "query": "MATCH (n:Person) WHERE n.name = 'Alice' RETURN n.name AS name, n.age AS age",
+    "test-value": [
+      {
+        "result": {
+          "name" : "Alice",
+          "age" : 30
+        },
+        "why-prov": [
+          ["n1001", "k2001","l4001", "k3001"]
+        ],
+        "how-prov": "(n1001+k2001+k3001+l4001)",
+        "where-prov": {
+          "name": ["k2001"],
+          "age": ["k3001"]
+        }
+      }
+    ]
+  },
+  "nullValues": {
+    "query": "MATCH (n:Person) WHERE n.name = 'Evan' RETURN n.name AS name, n.age AS age",
+    "test-value": [
+      {
+        "result": {
+          "name" : "Evan",
+          "age" : null
+        },
+        "why-prov": [
+          ["n1005", "k2005","l4005"]
+        ],
+        "how-prov": "(n1005+k2005+l4005)",
+        "where-prov": {
+          "name": ["k2005"],
+          "age": []
+        }
+      }
+    ]
+  },
+  "queryWithPathRepetition": {
+    "query": "MATCH (n:Person)-[:Transfer]->{1,2}(m) RETURN n.name AS sender, m.name AS receiver",
+    "test-value": [
+      {
+        "result": {
+          "sender" : "Alice",
+          "receiver": "Charlie"
+        },
+        "why-prov": [
+          ["n1001", "e7001","n1002","e7002","n1003","l4001", "k2001", "k2003","l5001","l5002"]
+        ],
+        "how-prov": "(n1001+k2001+l4001) x (e7001+l5001) x n1002 x (e7002+l5002) x (n1003+k2003)",
+        "where-prov": {
+          "sender": ["k2001"],
+          "receiver": ["k2003"]
+        }
+      },
+      {
+        "result": {
+          "sender" : "Alice",
+          "receiver": "Bob"
+        },
+        "why-prov": [
+          ["n1001", "e7001","n1002","l4001", "k2001", "k2002","l5001"]
+        ],
+        "how-prov": "(n1001+k2001+l4001) x (e7001+l5001) x (n1002+k2002)",
+        "where-prov": {
+          "sender": ["k2001"],
+          "receiver": ["k2002"]
+        }
+      },
+      {
+        "result": {
+          "sender" : "Bob",
+          "receiver": "Charlie"
+        },
+        "why-prov": [
+          ["n1002", "e7002","n1003","l4002", "k2002", "k2003","l5002"]
+        ],
+        "how-prov": "(n1002+k2002+l4002) x (e7002+l5002) x (n1003+k2003)",
+        "where-prov": {
+          "sender": ["k2002"],
+          "receiver": ["k2003"]
+        }
+      },
+      {
+        "result": {
+          "sender" : "Dan",
+          "receiver": "Evan"
+        },
+        "why-prov": [
+          ["n1004", "e7003","n1005","l4004", "k2004", "k2005","l5003"]
+        ],
+        "how-prov": "(n1004+k2004+l4004) x (e7003+l5003) x (n1005+k2005)",
+        "where-prov": {
+          "sender": ["k2004"],
+          "receiver": ["k2005"]
+        }
+      }
+    ]
+  },
+  "queryWithPathVariable": {
+    "query": "MATCH p=(n)-[:Transfer]->(m) WHERE n.name = 'Alice' RETURN p, m.name AS receiver",
+    "test-value": [
+      {
+        "result": {
+          "p" : [
+            {"labels":  ["Person","Leader"],
+              "props": { "name": "Alice", "age": 30, "__n": "n1001", "__k_name": "k2001", "__k_age": "k3001", "__l_Person": "l4001"}},
+            {"type": "Transfer",
+            "props": {"amount": 1000, "__l_Transfer": "l5001", "__k_amount": "k6001", "__e": "e7001"}},
+            {"labels":  ["Person"],
+            "props": { "name": "Bob", "age": 28, "__n": "n1002", "__k_name": "k2002", "__k_age": "k3002", "__l_Person": "l4002"}}
+          ],
+          "receiver": "Bob"
+        },
+        "why-prov": [
+          ["n1001", "e7001","n1002","l5001", "k2001", "k2002"]
+        ],
+        "how-prov": "(n1001+k2001) x (e7001+l5001) x (n1002+k2002)",
+        "where-prov": {
+          "p": ["n1001", "e7001","n1002"],
+          "receiver": ["k2002"]
+        }
+      }
+    ]
+  },
+  "queryWithPathJoin": {
+    "query": "MATCH (n)-[:Transfer]->(m), (m)-[]->() RETURN n.name AS sender, m.name AS receiver",
+    "test-value": [
+      {
+        "result": {
+          "sender" : "Alice",
+          "receiver": "Bob"
+        },
+        "why-prov": [
+          ["n1001", "e7001","n1002","e7002","n1003", "k2001", "k2002","l5001"]
+        ],
+        "how-prov": "((n1001+k2001) x (e7001+l5001) x (n1002+k2002)) x ((n1002+k2002) x e7002 x n1003)",
+        "where-prov": {
+          "sender": ["k2001"],
+          "receiver": ["k2002"]
+        }
+      }
+    ]
+  },
+  "unionQuery": {
+    "query": "MATCH (n)-[:Transfer]->(m) RETURN n.name AS sender, m.name AS receiver UNION MATCH (n{age:30})-[:Transfer]->(m) RETURN n.name AS sender, m.name AS receiver",
+    "test-value": [
+      {
+        "result": {
+          "sender" : "Alice",
+          "receiver": "Bob"
+        },
+        "why-prov": [
+          ["n1001", "e7001","n1002", "k2001", "k2002","l5001"],
+          ["n1001", "e7001","n1002", "k2001", "k2002", "k3001","l5001"]
+        ],
+        "how-prov": "((n1001+k2001) x (e7001+l5001) x (n1002+k2002)) + ((n1001+k2001+k3001) x (e7001+l5001) x (n1002+k2002))",
+        "where-prov": {
+          "sender": ["k2001"],
+          "receiver": ["k2002"]
+        }
+      },
+      {
+        "result": {
+          "sender" : "Bob",
+          "receiver": "Charlie"
+        },
+        "why-prov": [
+          ["n1002", "e7002","n1003", "k2002", "k2003","l5002"]
+        ],
+        "how-prov": "(n1002+k2002) x (e7002+l5002) x (n1003+k2003)",
+        "where-prov": {
+          "sender": ["k2002"],
+          "receiver": ["k2003"]
+        }
+      },
+      {
+        "result": {
+          "sender" : "Dan",
+          "receiver": "Evan"
+        },
+        "why-prov": [
+          ["n1004", "e7003","n1005", "k2004", "k2005","l5003"]
+        ],
+        "how-prov": "(n1004+k2004) x (e7003+l5003) x (n1005+k2005)",
+        "where-prov": {
+          "sender": ["k2004"],
+          "receiver": ["k2005"]
+        }
+      }
+    ]
+  },
+  "doubleMatch": {
+    "query": "MATCH (n)-[:Transfer]->(m) MATCH (m)-[e]->(:Person) RETURN n.name AS sender, e.amount AS amount",
+    "test-value": [
+      {
+        "result": {
+          "sender" : "Alice",
+          "amount": 1500
+        },
+        "why-prov": [
+          ["n1001", "e7001","n1002","e7002","n1003", "k2001", "k6002","l5001","l4003"]
+        ],
+        "how-prov": "((n1001+k2001) x (e7001+l5001) x n1002) x (n1002 x (e7002+k6002) x (n1003+l4003))",
+        "where-prov": {
+          "sender" : ["k2001"],
+          "amount": ["k6002"]
+        }
+      }
+    ]
+  },
+  "subQuery": {
+    "query": "MATCH (n) WHERE n.age<29 CALL(n){MATCH (n)-[e]->() RETURN e AS transfer } RETURN n.name AS sender, transfer.amount AS amount",
+    "test-value": [
+      {
+        "result": {
+          "sender" : "Bob",
+          "amount": 1500
+        },
+        "why-prov": [
+          ["n1002", "e7002","n1003", "k3002", "k2002","k6002"]
+        ],
+        "how-prov": "((n1002+k2002)) x (((n1002+k2002+k3002)) x ((n1002+k2002+k3002) x (e7002+k6002) x n1003))",
+        "where-prov": {
+          "sender" : ["k2002"],
+          "amount": ["k6002"]
+        }
+      },
+      {
+        "result": {
+          "sender" : "Dan",
+          "amount": 800
+        },
+        "why-prov": [
+          ["n1004", "e7003","n1005", "k2004", "k3004", "k6003"]
+        ],
+        "how-prov": "((n1004+k2004)) x (((n1004+k2004+k3004)) x ((n1004+k2004+k3004) x (e7003+k6003) x n1005))",
+        "where-prov": {
+          "sender" : ["k2004"],
+          "amount": ["k6003"]
+        }
+      }
+    ]
+  }
+}
