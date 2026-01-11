@@ -1,0 +1,24 @@
+services:
+  finbench-datagen:
+    build: .
+    image: finbench-data
+    container_name: koumudi-finbench-data
+    environment:
+      SCALE_FACTOR: ${SCALE_FACTOR}
+    volumes:
+      - ./datagen:/home/user/ldbc_finbench
+      - /data/ldbc_finbench_data_1:/home/user/data # host path : container path
+      - ./post_process:/home/user/scripts
+    working_dir: /home/user
+    post_start:
+      - command: ["sh", "-c", "${DATA_ACQ_CMD}"]
+        user: root
+        privileged: true
+      - command: ["sh", "-c","cd /home/user/scripts"]
+        user: root
+        privileged: true
+      - command: "python3 update_headers.py ${SCALE_FACTOR}"
+        user: root
+        privileged: true
+    tty: true
+    stdin_open: true

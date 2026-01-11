@@ -1,0 +1,325 @@
+{
+  "account": {
+    "type": "node",
+    "label": "ACCOUNT",
+    "header-update":[{
+        "current": "id",
+        "new": "id:ID(Account-ID)"
+    },{
+      "current": "createTime",
+      "new": "createTime:long"
+    },{
+      "current": "isBlocked",
+      "new": "isBlocked:boolean"
+    },{
+      "current": "lastLoginTime",
+      "new": "lastLoginTime:long"
+    }
+
+    ]},
+  "person":{
+    "type": "node",
+    "label":"PERSON",
+    "header-update": [{
+        "current": "id",
+        "new": "id:ID(Person-ID)"
+    },{
+      "current": "isBlocked",
+      "new": "isBlocked:boolean"
+    },{
+      "current": "createTime",
+      "new": "createTime:long"
+    },{
+      "current": "birthday",
+      "new": "birthday:long"
+    }
+    ]},
+  "company":{
+    "type": "node",
+    "label":"COMPANY",
+    "header-update": [{
+          "current": "id",
+          "new": "id:ID(Company-ID)"
+    },{
+      "current": "isBlocked",
+      "new": "isBlocked:boolean"
+    },{
+        "current": "createTime",
+        "new": "createTime:long"
+    }
+    ]},
+  "loan": {
+    "type": "node",
+    "label":"LOAN",
+    "header-update": [{
+          "current": "id",
+          "new": "id:ID(Loan-ID)"
+    },{
+      "current": "loanAmount",
+      "new": "loanAmount:float"
+    },{
+      "current": "balance",
+      "new": "balance:float"
+    },{
+      "current": "interestRate",
+      "new": "interestRate:float"
+    }
+    ]},
+  "medium": {
+    "type": "node",
+    "label":"MEDIUM",
+    "header-update": [{
+      "current": "id",
+      "new": "id:ID(Medium-ID)"
+    },{
+      "current": "createTime",
+      "new": "createTime:long"
+    },{
+      "current": "isBlocked",
+      "new": "isBlocked:boolean"
+    },{
+      "current": "lastLogin",
+      "new": "lastLogin:long"
+    }
+    ]},
+  "signIn": {
+    "type": "relationship",
+    "label": "SIGN_IN",
+    "header-update":[{
+      "current": "mediumId",
+      "new": "id:START_ID(Medium-ID)"
+      },
+      {
+        "current": "accountId",
+        "new": "id:END_ID(Account-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      }
+    ]},
+  "personOwnAccount": {
+    "type": "relationship",
+    "label": "OWN",
+    "header-update":[{
+      "current": "personId",
+      "new": "id:START_ID(Person-ID)"
+    },
+      {
+        "current": "accountId",
+        "new": "id:END_ID(Account-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      }
+    ]},
+  "companyOwnAccount": {
+    "type": "relationship",
+    "label": "OWN",
+    "header-update":[{
+      "current": "companyId",
+      "new": "id:START_ID(Company-ID)"
+    },
+      {
+        "current": "accountId",
+        "new": "id:END_ID(Account-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      }
+    ]},
+  "transfer": {
+    "type": "relationship",
+    "label": "TRANSFER",
+    "header-update":[{
+      "current": "fromId",
+      "new": "id:START_ID(Account-ID)"
+    },
+      {
+        "current": "toId",
+        "new": "id:END_ID(Account-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      },
+      {
+        "current": "amount",
+        "new": "amount:float"
+      }
+    ]},
+  "withdraw": {
+    "type": "relationship",
+    "label": "WITHDRAW",
+    "header-update":[{
+      "current": "fromId",
+      "new": "id:START_ID(Account-ID)"
+    },
+      {
+        "current": "toId",
+        "new": "id:END_ID(Account-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      },
+      {
+        "current": "amount",
+        "new": "amount:float"
+      }
+    ]},
+  "personApplyLoan": {
+    "type": "relationship",
+    "label": "APPLY",
+    "header-update":[{
+      "current": "personId",
+      "new": "id:START_ID(Person-ID)"
+    },
+      {
+        "current": "loanId",
+        "new": "id:END_ID(Loan-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      },
+      {
+        "current": "loanAmount",
+        "new": "loanAmount:float"
+      }
+    ]},
+  "companyApplyLoan": {
+    "type": "relationship",
+    "label": "APPLY",
+    "header-update":[{
+      "current": "companyId",
+      "new": "id:START_ID(Company-ID)"
+    },
+      {
+        "current": "loanId",
+        "new": "id:END_ID(Loan-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      },
+      {
+        "current": "loanAmount",
+        "new": "loanAmount:float"
+      }
+    ]},
+  "deposit": {
+    "type": "relationship",
+    "label": "DEPOSIT",
+    "header-update":[{
+      "current": "loanId",
+      "new": "id:START_ID(Loan-ID)"
+    },
+      {
+        "current": "accountId",
+        "new": "id:END_ID(Account-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      },
+      {
+        "current": "amount",
+        "new": "amount:float"
+      }
+    ]},
+  "repay": {
+    "type": "relationship",
+    "label": "REPAY",
+    "header-update":[{
+      "current": "accountId",
+      "new": "id:START_ID(Account-ID)"
+    },
+      {
+        "current": "loanId",
+        "new": "id:END_ID(Loan-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      },
+      {
+        "current": "amount",
+        "new": "amount:float"
+      }
+    ]},
+  "personInvest": {
+    "type": "relationship",
+    "label": "INVEST",
+    "header-update":[{
+      "current": "investorId",
+      "new": "id:START_ID(Person-ID)"
+    },
+      {
+        "current": "companyId",
+        "new": "id:END_ID(Company-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      },
+      {
+        "current": "ratio",
+        "new": "ratio:float"
+      }
+    ]},
+  "companyInvest": {
+    "type": "relationship",
+    "label": "INVEST",
+    "header-update":[{
+      "current": "investorId",
+      "new": "id:START_ID(Company-ID)"
+    },
+      {
+        "current": "companyId",
+        "new": "id:END_ID(Company-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      },
+      {
+        "current": "ratio",
+        "new": "ratio:float"
+      }
+    ]},
+  "personGuarantee": {
+    "type": "relationship",
+    "label": "GUARANTEE",
+    "header-update":[{
+      "current": "fromId",
+      "new": "id:START_ID(Person-ID)"
+    },
+      {
+        "current": "toId",
+        "new": "id:END_ID(Person-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      }
+    ]},
+  "companyGuarantee": {
+    "type": "relationship",
+    "label": "GUARANTEE",
+    "header-update":[{
+      "current": "fromId",
+      "new": "id:START_ID(Company-ID)"
+    },
+      {
+        "current": "toId",
+        "new": "id:END_ID(Company-ID)"
+      },
+      {
+        "current": "createTime",
+        "new": "createTime:long"
+      }
+    ]}
+}
