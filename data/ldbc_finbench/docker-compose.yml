@@ -10,12 +10,5 @@ services:
       - /data/pgprov/finbench:/home/user/data # host path : container path
       - ./post_process:/home/user/scripts
     working_dir: /home/user
-    post_start:
-      - command: ["sh", "-c","cd /home/user/scripts"]
-        user: root
-        privileged: true
-      - command: "python3 update_headers.py ${SCALE_FACTOR}"
-        user: root
-        privileged: true
     tty: true
     stdin_open: true

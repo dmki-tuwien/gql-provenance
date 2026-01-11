@@ -15,7 +15,7 @@ declare -A PARAMS_MAPPING=(
   ["10"]="https://datasets.ldbcouncil.org/finbench/sf10_read_params.zip"
 )
 
-mkdir -p OUTPUT_DIR
+mkdir -p $OUTPUT_DIR
 cd $OUTPUT_DIR
 
 for scale in "${!DATASET_MAPPING[@]}"; do
@@ -67,12 +67,12 @@ for scale in "${!PARAMS_MAPPING[@]}"; do
     echo "Downloading $zip_file"
     curl -L -o "$zip_file" "$url"
   else
-    echo "✓ $zip_file already downloaded"
+    echo "$zip_file already downloaded"
   fi
 
   # Extract zip
   if [ -z "$(ls -A . | grep -v "$zip_file")" ]; then
-    echo "📂 Extracting $zip_file"
+    echo "Extracting $zip_file"
     unzip -o "$zip_file"
   else
     echo "Params already extracted"

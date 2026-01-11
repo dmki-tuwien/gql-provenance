@@ -2,10 +2,10 @@
 
 cd ${HOME}
 
-rm -rf /var/lib/neo4j/data/databases/${DB_NAME}
-rm -rf /var/lib/neo4j/data/transactions/${DB_NAME}
+rm -rf /var/lib/neo4j/data/databases/neo4j
+rm -rf /var/lib/neo4j/data/transactions/neo4j
 
-./bin/neo4j-admin database import full \
+/var/lib/neo4j/bin/neo4j-admin database import full \
      --nodes "/import/${DATASET}/sf${SCALE_FACTOR}/raw/account/part-([A-Za-z0-9-]+).csv" \
      --nodes "/import/${DATASET}/sf${SCALE_FACTOR}/raw/person/part-([A-Za-z0-9-]+).csv" \
      --nodes "/import/${DATASET}/sf${SCALE_FACTOR}/raw/company/part-([A-Za-z0-9-]+).csv" \
@@ -24,6 +24,6 @@ rm -rf /var/lib/neo4j/data/transactions/${DB_NAME}
      --relationships "/import/${DATASET}/sf${SCALE_FACTOR}/raw/companyInvest/part-([A-Za-z0-9-]+)\.csv" \
      --relationships "/import/${DATASET}/sf${SCALE_FACTOR}/raw/personGuarantee/part-([A-Za-z0-9-]+)\.csv" \
      --relationships "/import/${DATASET}/sf${SCALE_FACTOR}/raw/companyGuarantee/part-([A-Za-z0-9-]+)\.csv" \
-     --delimiter "|" ${DB_NAME} --verbose
+     --delimiter "|" neo4j --verbose
 
 echo "Done importing data"

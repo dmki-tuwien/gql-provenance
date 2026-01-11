@@ -1,5 +1,6 @@
 .DS_Store
 .idea
+.rsyncignore
 
 pgprov-core/src/main/java/org/pgprov/parser/*
 */target/*
