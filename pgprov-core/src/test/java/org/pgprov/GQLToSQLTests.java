@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.junit.jupiter.api.Test;
 import org.pgprov.parser.GQLLexer;
 import org.pgprov.parser.GQLParser;
-import org.pgprov.processors.GQLQueryProcessor;
+import org.pgprov.processor.query.GQLQueryProcessor;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

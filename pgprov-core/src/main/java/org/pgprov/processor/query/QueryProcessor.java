@@ -1,4 +1,4 @@
-package org.pgprov.processors;
+package org.pgprov.processor.query;
 
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

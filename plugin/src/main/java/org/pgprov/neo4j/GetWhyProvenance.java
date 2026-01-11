@@ -12,15 +12,15 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.pgprov.Globals;
+import org.pgprov.ast.SQLNode;
+import org.pgprov.neo4j.result.Helper;
 import org.pgprov.parser.GQLLexer;
 import org.pgprov.parser.GQLParser;
-import org.pgprov.neo4j.transformer.Neo4jEdgeTransformer;
-import org.pgprov.neo4j.transformer.Neo4jNodeTransformer;
-import org.pgprov.processors.GQLQueryProcessor;
-import org.pgprov.ast.SQLNode;
+import org.pgprov.processor.query.GQLQueryProcessor;
+import org.pgprov.processor.result.Grouper;
+import org.pgprov.processor.result.WhyProvResultRow;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GetWhyProvenance {
@@ -40,7 +40,7 @@ public class GetWhyProvenance {
      */
     @Procedure(name = "org.pgprov.getWhyProvenance")
     @Description("Get the why-provenance of a query result.")
-    public Stream<GetWhyProvenance.ResultRow> getWhyProvenance(@Name("query") String query, @Name("params") Map<String, Object> params) throws Exception {
+    public Stream<Row> getWhyProvenance(@Name("query") String query, @Name("params") Map<String, Object> params) throws Exception {
 
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);
@@ -59,96 +59,36 @@ public class GetWhyProvenance {
         System.out.println("Updated query: " + updatedQuery);
         System.out.println("SQL AST: " + processor.getSQLAST().toString(0));
         Result result = tx.execute(updatedQuery, params);
-        Stream<GetWhyProvenance.ResultRow> processedResults = result.stream().map(row -> new GetWhyProvenance.ResultRow(row, processor.getSQLAST()));
 
-        Map<Integer, GetWhyProvenance.ResultRow> grouped = new LinkedHashMap<>();
-
-        processedResults.forEach(row -> {
-            int key = row.hashCode();
-
-            grouped.merge(
-                    key,
-                    row,
-                    (existing, incoming) -> {
-                        existing.prov.addAll(incoming.prov);
-                        return existing;
-                    }
-            );
-        });
-        return grouped.values().stream();
+        Grouper<Map<String, Object>,List<List<String>>, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new);
+        return grouper.process(result.stream()).map(row-> new Row(row.getResult(), row.getProv()));
     }
 
-    public static class ResultRow {
+    public static class Row{
 
         public Map<String, Object> result;
-
         public List<List<String>> prov;
 
-        public ResultRow(Map<String, Object> row, SQLNode sqlNode) {
+        public Row(Map<String, Object> result, List<List<String>> prov) {
+            this.result = result;
+            this.prov = prov;
+        }
+    }
 
-            Map<String, Object> tempRow = new HashMap<>();
+    public static class InternalRow extends WhyProvResultRow<Map<String, Object>> {
 
-            Neo4jNodeTransformer nodeTransformer = new Neo4jNodeTransformer();
-            Neo4jEdgeTransformer edgeTransformer = new Neo4jEdgeTransformer();
-
-            for(String key : row.keySet()) {
-
-                Object value = row.get(key);
-
-                if(value instanceof Node){
-                    tempRow.put(key, nodeTransformer.transform((Node) value));
-                }else if(value instanceof Relationship){
-                    tempRow.put(key, edgeTransformer.transform((Relationship) value));
-                }else if(value instanceof Path){
-
-                    Path path = (Path) value;
-                    List<org.pgprov.graph.model.Entity> pathElements = new ArrayList<>();
-
-                    for(Entity entity: path){
-                        if(entity instanceof Node){
-                            pathElements.add(nodeTransformer.transform((Node) entity));
-                        }else if(entity instanceof Relationship){
-                            pathElements.add(edgeTransformer.transform((Relationship) entity));
-                        }
-                    }
-                    tempRow.put(key, new org.pgprov.graph.model.Path(pathElements));
-                }else if(value instanceof List<?> list){
-                    List<org.pgprov.graph.model.Entity> repeatedVals = new ArrayList<>();
-
-                    for(Object entity: list){
-                        if(entity instanceof Node){
-                            repeatedVals.add(nodeTransformer.transform((Node) entity));
-                        }else if(entity instanceof Relationship){
-                            repeatedVals.add(edgeTransformer.transform((Relationship) entity));
-                        }
-                    }
-                    tempRow.put(key, repeatedVals);
-                }
-            }
-
-            Set<Set<String>> prov = sqlNode.calculateWhyProv(tempRow, new HashMap<>());
-            this.prov = prov.stream()
-                    .map(ArrayList::new)   // each Set -> mutable List
-                    .collect(Collectors.toList());
-
-            Set<String> returnVars =  sqlNode.getOriginalReturnVars();
-
-            Iterator<String> it = row.keySet().iterator();
-
-            while (it.hasNext()) {
-                String key = it.next();
-                if(!returnVars.contains(key)) {
-                    it.remove();
-                }
-            }
-
-            this.result = row;
+        public InternalRow(Map<String, Object> row, SQLNode sqlNode) {
+            super(row, sqlNode);
         }
 
         @Override
-        public int hashCode() {
-            return Objects.hash(result);
+        public Map<String, Object> transformInputRow(Map<String, Object> row) {
+            return Helper.transformInputRow(row);
+        }
+
+        @Override
+        public Map<String, Object> updateResult(Map<String, Object> row, Set<String> returnVars) {
+            return Helper.updateResult(row, returnVars);
         }
     }
-
 }

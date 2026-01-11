@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-OUT_DIR=../pgprov-core/src/main/java/org/pgprov/parser
+OUT_DIR=./src/main/java/org/pgprov/parser
 mkdir -p $OUT_DIR
 
 # Download ANTLR library

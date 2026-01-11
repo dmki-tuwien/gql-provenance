@@ -27,4 +27,10 @@ public class Globals {
         REWRITE,
         INDIVIDUAL_QUERY_PROCESS
     }
+
+    public enum ProvenanceType {
+        WHY_PROV,
+        WHERE_PROV,
+        HOW_PROV
+    }
 }
