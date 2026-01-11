@@ -1,6 +1,7 @@
 #!/bin/bash
 
-OUTPUT_DIR=$1
+OUTPUT_DIR=$1/finbench
+#/data/pgprov
 #/home/user/data/
 
 declare -A DATASET_MAPPING=(
@@ -9,6 +10,12 @@ declare -A DATASET_MAPPING=(
   ["10"]="https://datasets.ldbcouncil.org/finbench/sf10.tar.gz"
 )
 
+declare -A PARAMS_MAPPING=(
+  ["1"]="https://datasets.ldbcouncil.org/finbench/sf1_read_params.zip"
+  ["10"]="https://datasets.ldbcouncil.org/finbench/sf10_read_params.zip"
+)
+
+mkdir -p OUTPUT_DIR
 cd $OUTPUT_DIR
 
 for scale in "${!DATASET_MAPPING[@]}"; do
@@ -36,11 +43,6 @@ for scale in "${!DATASET_MAPPING[@]}"; do
 
   echo
 done
-
-declare -A PARAMS_MAPPING=(
-  ["1"]="https://datasets.ldbcouncil.org/finbench/sf1_read_params.zip"
-  ["10"]="https://datasets.ldbcouncil.org/finbench/sf10_read_params.zip"
-)
 
 for scale in "${!PARAMS_MAPPING[@]}"; do
   url="${PARAMS_MAPPING[$scale]}"

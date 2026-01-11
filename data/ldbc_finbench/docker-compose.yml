@@ -7,13 +7,10 @@ services:
       SCALE_FACTOR: ${SCALE_FACTOR}
     volumes:
       - ./datagen:/home/user/ldbc_finbench
-      - /data/ldbc_finbench_data_1:/home/user/data # host path : container path
+      - /data/pgprov/finbench:/home/user/data # host path : container path
       - ./post_process:/home/user/scripts
     working_dir: /home/user
     post_start:
-      - command: ["sh", "-c", "${DATA_ACQ_CMD}"]
-        user: root
-        privileged: true
       - command: ["sh", "-c","cd /home/user/scripts"]
         user: root
         privileged: true

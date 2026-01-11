@@ -10,7 +10,7 @@ if len(sys.argv) != 2:
     print("Usage: python update_headers.py <scale-factor>")
     sys.exit(1)
 
-scale_factor = f"sf_{sys.argv[1]}"  # e.g., "0.1" or "1"
+scale_factor = f"sf{sys.argv[1]}"  # e.g., "0.1" or "1"
 print(f"For scale factor: {scale_factor}")
 
 # Root folder containing nodes/edges folders
