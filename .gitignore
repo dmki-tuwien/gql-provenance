@@ -5,3 +5,5 @@ pgprov-core/src/main/java/org/pgprov/parser/*
 */target/*
 
 *.jar
+
+data/ldbc_finbench/datagen/*

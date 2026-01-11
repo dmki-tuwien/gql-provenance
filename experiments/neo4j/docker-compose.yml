@@ -1,0 +1,62 @@
+services:
+  neo4j-import:
+    image: neo4j:2025.09.0
+    container_name: koumudi-neo4j
+    user: "neo4j"
+    tty: true
+    stdin_open: true
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      DATASET: ${DATASET}
+      DB_NAME: ${DB_NAME}
+      SCALE_FACTOR: ${SCALE_FACTOR}
+      NEO4J_AUTH: ${USERNAME}/${PASSWORD}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      NEO4J_dbms_security_procedures_allowlist: apoc.*,gds.*,org.pgprov.*
+      NEO4J_apoc_import_file_enabled: "true"
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_server_directories_plugins: /plugins
+      NEO4J_server_directories_logs: /logs
+      NEO4J_server_directories_import: /import
+      NEO4J_server_default_listen_address: 0.0.0.0
+      NEO4J_dbms_active__database: ${DB_NAME}.db
+    # There is no volume for persistence because we need the original graphs
+    networks:
+      - app-network
+    volumes:
+      - ./setup/plugins:/var/lib/neo4j/plugins
+      - ./setup/scripts:/scripts
+      - /data/neo4j_data:/var/lib/neo4j/data
+      - /data/pgprov:/import
+    post_start:
+      - command: ["sh", "-c", "${POST_START_CMD}"]
+        user: root
+        privileged: true
+    pre_stop:
+      - command: "chown -R --reference=/out /var/lib/neo4j/data"
+        user: root
+        privileged: true
+      - command: "chmod -R --reference=/out /var/lib/neo4j/data"
+        user: root
+        privileged: true
+      - command: "chown -R --reference=/out /var/lib/neo4j/plugins"
+        user: root
+        privileged: true
+      - command: "chmod -R --reference=/out /var/lib/neo4j/plugins"
+        user: root
+        privileged: true
+      - command: "chown -R --reference=/out /scripts"
+        user: root
+        privileged: true
+      - command: "chmod -R --reference=/out /scripts"
+        user: root
+        privileged: true
+      - command: "chown -R --reference=/out /import"
+        user: root
+        privileged: true
+      - command: "chmod -R --reference=/out /import"
+        user: root
+        privileged: true
