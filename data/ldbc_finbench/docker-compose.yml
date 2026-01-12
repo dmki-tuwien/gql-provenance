@@ -4,7 +4,7 @@ services:
     image: finbench-data
     container_name: koumudi-finbench-data
     environment:
-      SCALE_FACTOR: ${SCALE_FACTOR}
+      SCALE_FACTORS: ${SCALE_FACTORS}
     volumes:
       - ./datagen:/home/user/ldbc_finbench
       - /data/pgprov/finbench:/home/user/data # host path : container path

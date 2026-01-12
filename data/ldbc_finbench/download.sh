@@ -16,9 +16,11 @@ declare -A PARAMS_MAPPING=(
 )
 
 mkdir -p $OUTPUT_DIR
-cd $OUTPUT_DIR
 
 for scale in "${!DATASET_MAPPING[@]}"; do
+
+  cd $OUTPUT_DIR
+
   url="${DATASET_MAPPING[$scale]}"
   archive="$(basename "$url")"
   extract_dir="${archive%.tar.gz}"
@@ -41,10 +43,6 @@ for scale in "${!DATASET_MAPPING[@]}"; do
     echo "✓ $extract_dir already extracted"
   fi
 
-  echo
-done
-
-for scale in "${!PARAMS_MAPPING[@]}"; do
   url="${PARAMS_MAPPING[$scale]}"
   zip_file="$(basename "$url")"
 
@@ -73,7 +71,7 @@ for scale in "${!PARAMS_MAPPING[@]}"; do
   # Extract zip
   if [ -z "$(ls -A . | grep -v "$zip_file")" ]; then
     echo "Extracting $zip_file"
-    unzip -o "$zip_file"
+    python3 -m zipfile -e $zip_file .
   else
     echo "Params already extracted"
   fi
