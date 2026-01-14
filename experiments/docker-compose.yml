@@ -1,0 +1,36 @@
+services:
+  neo4j:
+    image: neo4j:2025.09.0
+    container_name: koumudi-neo4j-new
+    tty: true
+    stdin_open: true
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      DATASET: ${DATASET}
+      SCALE_FACTOR: ${SCALE_FACTOR}
+      NEO4J_AUTH: ${USERNAME}/${PASSWORD}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      NEO4J_dbms_security_procedures_allowlist: apoc.*,gds.*,org.pgprov.*
+      NEO4J_apoc_import_file_enabled: "true"
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_server_directories_logs: /logs
+      NEO4J_server_directories_import: /import
+    volumes:
+      - ./neo4j/setup/plugins:/var/lib/neo4j/plugins
+      - ./neo4j/setup/scripts:/scripts
+      - ${PERSIST_DB_DIR}:/var/lib/neo4j/data
+  test-driver:
+    build: ./driver
+    image: pgprov-test-driver
+    container_name: koumudi-test-driver
+    volumes:
+      - ./src/main/resources:/app/resources
+      - ${PARAMS_DIR}:/app/params
+      - ./driver/configs/config.properties:/app/config.properties
+      - ./driver/target/pgprov_test_driver-1.0.jar:/app/app.jar
+      - ./result:/app/result
+    working_dir: /app
+    tty: true
