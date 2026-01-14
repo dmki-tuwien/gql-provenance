@@ -1,6 +1,7 @@
 #!/bin/bash
 
 OUTPUT_DIR=$1/finbench
+PARAMS_DIR=$1/params/finbench
 #/data/pgprov
 #/home/user/data/
 
@@ -45,20 +46,10 @@ for scale in "${!DATASET_MAPPING[@]}"; do
 
   url="${PARAMS_MAPPING[$scale]}"
   zip_file="$(basename "$url")"
+  echo "$url"
 
-  dataset_dir="$OUTPUT_DIR/sf$scale"
-  param_dir="$dataset_dir/param"
-
-  echo "Params for scale factor $scale"
-
-  # Ensure dataset folder exists
-  if [ ! -d "$dataset_dir" ]; then
-    echo "Dataset directory $dataset_dir does not exist — skipping"
-    continue
-  fi
-
-  mkdir -p "$param_dir"
-  cd "$param_dir"
+  mkdir -p "${PARAMS_DIR}/sf_${scale}"
+  cd "${PARAMS_DIR}/sf_${scale}"
 
   # Download zip
   if [ ! -f "$zip_file" ]; then

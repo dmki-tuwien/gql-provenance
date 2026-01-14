@@ -1,17 +1,18 @@
 #!/bin/bash
 
 OUTPUT_DIR=$1/snb
+PARAMS_DIR=$1/params/snb
 #/data/pgprov
 #/home/user/data/
 
 declare -A DATASET_MAPPING=(
-#  ["0.1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf0.1-CsvBasic-LongDateFormatter.tar.zst"
+  ["0.1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf0.1-CsvBasic-LongDateFormatter.tar.zst"
   ["1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf1-CsvBasic-LongDateFormatter.tar.zst"
   ["10"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf10-CsvBasic-LongDateFormatter.tar.zst"
 )
 
 declare -A PARAMS_MAPPING=(
-#  ["0.1"]="https://repository.surfsara.nl/datasets/cwi/snb/files/substitution_parameters/substitution_parameters-sf0.1.tar.zst"
+  ["0.1"]="https://repository.surfsara.nl/datasets/cwi/snb/files/substitution_parameters/substitution_parameters-sf0.1.tar.zst"
   ["1"]="https://repository.surfsara.nl/datasets/cwi/snb/files/substitution_parameters/substitution_parameters-sf1.tar.zst"
   ["10"]="https://repository.surfsara.nl/datasets/cwi/snb/files/substitution_parameters/substitution_parameters-sf10.tar.zst"
 )
@@ -65,19 +66,8 @@ for scale in "${!DATASET_MAPPING[@]}"; do
   url="${PARAMS_MAPPING[$scale]}"
   zip_file="$(basename "$url")"
 
-  dataset_dir="$OUTPUT_DIR/$extract_dir"
-  param_dir="$dataset_dir/param"
-
-  echo "Params for scale factor $scale"
-
-  # Ensure dataset folder exists
-  if [ ! -d "$dataset_dir" ]; then
-    echo "Dataset directory $dataset_dir does not exist — skipping"
-    continue
-  fi
-
-  mkdir -p "$param_dir"
-  cd "$param_dir"
+  mkdir -p "${PARAMS_DIR}/sf_${scale}"
+  cd "${PARAMS_DIR}/sf_${scale}"
 
   # Download zip
   if [ ! -f "$zip_file" ]; then
