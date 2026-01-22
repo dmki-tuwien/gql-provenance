@@ -17,7 +17,7 @@ public abstract class ResultRow<S,T> {
         this.sqlNode = sqlNode;
 
         Map<String, Object> tempRow =  transformInputRow(row);
-        this.prov = calculateProvenance(tempRow, new HashMap<>());
+        this.prov = calculateProvenance(tempRow);
         Set<String> returnVars =  sqlNode.getOriginalReturnVars();
         this.result = updateResult(row, returnVars);
     }
@@ -26,7 +26,7 @@ public abstract class ResultRow<S,T> {
 
     public abstract S updateResult(S row, Set<String> returnVars);
 
-    public abstract T calculateProvenance(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures);
+    public abstract T calculateProvenance(Map<String, Object> row);
 
     public abstract void mergeProvenance (ResultRow<S, T> otherRow);
 

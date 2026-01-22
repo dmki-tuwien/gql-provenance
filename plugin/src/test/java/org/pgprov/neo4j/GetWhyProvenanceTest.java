@@ -1,16 +1,26 @@
 package org.pgprov.neo4j;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.json.JSONException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.neo4j.driver.AuthTokens;
-import org.neo4j.driver.Driver;
-import org.neo4j.driver.GraphDatabase;
+import org.neo4j.driver.*;
+import org.neo4j.driver.Record;
 import org.neo4j.harness.Neo4j;
 import org.neo4j.harness.Neo4jBuilders;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class GetWhyProvenanceTest {
@@ -118,4 +128,35 @@ public class GetWhyProvenanceTest {
 
     }
 
+    @Test
+    public void runTest( ) throws IOException {
+        try (Session session = driver.session()) {
+
+            String query = "MATCH (person:PERSON {id: '10995116278938'})-[edge1:OWN]->(src:ACCOUNT)," +
+                    " p=(src)-[edge2:TRANSFER]->{1,3}(dst:ACCOUNT)" +
+                    " RETURN p AS path1" +
+                    " ORDER BY path1 DESC";
+            Result record = session.run("CALL org.pgprov.getWhyProvenance(\""+query+"\" , {})");
+
+//            ArrayNode actualSet = mapper.createArrayNode();
+//
+//            while (record.hasNext()) {
+//                Record rec = record.next();
+//                Map<String,Object> recordMap = rec.asMap().entrySet().stream()
+//                        .collect(Collectors.toMap(
+//                                Map.Entry::getKey,
+//                                e -> convertNeoValue(e.getValue())
+//                        ));
+//
+//                actualSet.add(mapper.valueToTree(recordMap));
+//            }
+
+            System.out.println(record);
+//            System.out.println(actualSet);
+//
+//            JSONAssert.assertEquals(actualSet.toString(), testValue.toString(), JSONCompareMode.LENIENT);
+        }
+
+    }
 }
+

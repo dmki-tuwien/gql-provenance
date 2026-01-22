@@ -38,15 +38,19 @@ public abstract class SQLNode {
 
     ;
 
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
         return new HashSet<>();
     }
 
-    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row) {
         return new HashMap<>();
     }
 
-    public String calculateHowProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public String calculateHowProv(Map<String, Object> row) {
         return "";
+    }
+
+    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
+        //not used
     }
 }

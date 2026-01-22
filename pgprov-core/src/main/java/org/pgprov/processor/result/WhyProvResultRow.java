@@ -12,8 +12,8 @@ public abstract class WhyProvResultRow<S> extends ResultRow<S,List<List<String>>
     }
 
     @Override
-    public List<List<String>> calculateProvenance(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
-        Set<Set<String>> prov = this.getSqlNode().calculateWhyProv(row, new HashMap<>());
+    public List<List<String>> calculateProvenance(Map<String, Object> row) {
+        Set<Set<String>> prov = this.getSqlNode().calculateWhyProv(row);
         return prov.stream()
                 .map(ArrayList::new)   // each Set -> mutable List
                 .collect(Collectors.toList());

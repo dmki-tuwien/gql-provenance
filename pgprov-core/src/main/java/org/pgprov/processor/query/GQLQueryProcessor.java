@@ -161,7 +161,6 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     public void exitAmbientLinearQueryStatement(GQLParser.AmbientLinearQueryStatementContext ctx) {
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
             if (ctx.primitiveResultStatement() != null) {
-
                 GQLParser.ReturnStatementBodyContext returnContext = ctx.primitiveResultStatement().returnStatement().returnStatementBody();
                 Set<String> varNames = new HashSet<>();
                 if (returnContext.ASTERISK() != null) {
@@ -302,8 +301,10 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 if (preStatementContext == null) {
                     sqlNodes.put(statement, sqlNodes.get(statement.callQueryStatement()));
                 } else {
-                    sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(statement.callQueryStatement())));
+                    sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(statement.callQueryStatement()), new HashMap<>()));
                 }
+
+                preStatementContext = statement;
             } else {
 
                 GQLParser.PrimitiveQueryStatementContext primitiveQueryStatement = statement.primitiveQueryStatement();
@@ -312,8 +313,11 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                     if (preStatementContext == null) {
                         sqlNodes.put(statement, sqlNodes.get(primitiveQueryStatement.matchStatement()));
                     } else {
-                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.matchStatement())));
+                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.matchStatement()), new HashMap<>(schemasAndsignatures)));
+                        schemasAndsignatures.clear();
                     }
+
+                    preStatementContext = statement;
 
                 } else if (primitiveQueryStatement.filterStatement() != null) {
                     SQLNode from;
@@ -326,17 +330,19 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                     }
                     sqlNodes.put(statement, new SQLSelectNode(from, (SQLSelectCriteriaNode) sqlNodes.get(primitiveQueryStatement.filterStatement())));
 
+                    preStatementContext = statement;
                 } else if (primitiveQueryStatement.letStatement() != null) {
                     if (preStatementContext == null) {
                         sqlNodes.put(statement, sqlNodes.get(primitiveQueryStatement.letStatement()));
                     } else {
-                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.letStatement())));
+                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.letStatement()), new HashMap<>()));
                     }
-                } else {
+                    preStatementContext = statement;
+                } else if(primitiveQueryStatement.orderByAndPageStatement() == null) {
                     throw new RuntimeException("Only match, filter and let statements are supported.");
                 }
             }
-            preStatementContext = statement;
+
         }
     }
 
@@ -360,7 +366,6 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitMatchStatement(GQLParser.MatchStatementContext ctx) {
-
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
             if (ctx.simpleMatchStatement() != null) {
                 sqlNodes.put(ctx, sqlNodes.get(ctx.simpleMatchStatement()));
@@ -376,10 +381,11 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
 
             if (initialRelation != null) {
-                sqlNodes.put(ctx, new SQLJoin(initialRelation, sqlNodes.get(ctx.graphPatternBindingTable())));
+                sqlNodes.put(ctx, new SQLJoin(initialRelation, sqlNodes.get(ctx.graphPatternBindingTable()), new HashMap<>(schemasAndsignatures)));
             } else {
-                sqlNodes.put(ctx, sqlNodes.get(ctx.graphPatternBindingTable()));
+                sqlNodes.put(ctx, new SQLJoin(new SQLEmptyNode(), sqlNodes.get(ctx.graphPatternBindingTable()), new HashMap<>(schemasAndsignatures)));
             }
+            schemasAndsignatures.clear();
         }
     }
 
@@ -406,7 +412,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 if (from == null) {
                     from = sqlNodes.get(pathPatternContext);
                 } else {
-                    from = new SQLJoin(from, sqlNodes.get(pathPatternContext));
+                    from = new SQLJoin(from, sqlNodes.get(pathPatternContext), new HashMap<>());
                 }
             }
             sqlNodes.put(ctx, from);
@@ -447,11 +453,10 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
             if (varScopeCtx != null && !varScopeCtx.isEmpty()) {
 
-
                 initialRelation = new SQLProjectNode(Arrays.stream(
                                 varScopeCtx.bindingVariableReferenceList().getText().split(",")
                         )
-                        .collect(Collectors.toSet()), sqlNodes.get(subqueryScopes.get(ctx)), new HashMap<>(schemasAndsignatures), new HashSet<>(), true);
+                        .collect(Collectors.toSet()), sqlNodes.get(subqueryScopes.get(ctx)), new HashMap<>(), new HashSet<>(), true);
             }
         }
     }
@@ -522,7 +527,6 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitPathPattern(GQLParser.PathPatternContext ctx) {
-
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {  //changed
             // add path variables to pattern expressions
             if (ctx.pathVariableDeclaration() == null) {

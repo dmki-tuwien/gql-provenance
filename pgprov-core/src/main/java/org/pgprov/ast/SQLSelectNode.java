@@ -1,5 +1,7 @@
 package org.pgprov.ast;
 
+import org.pgprov.Globals;
+
 import java.util.*;
 
 public class SQLSelectNode extends SQLNode {
@@ -41,7 +43,7 @@ public class SQLSelectNode extends SQLNode {
     }
 
     @Override
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
 
         Map<String, List<String>> schemaAndSignatures = criteriaNode.schemaAndSignatures();
 
@@ -51,23 +53,22 @@ public class SQLSelectNode extends SQLNode {
             schemaList.addAll(schemaAndSignatures.get(varName));
             varSchemaAndSignatures.put(varName, schemaList);
         }
-        return fromNode.calculateWhyProv(row, varSchemaAndSignatures);
+
+        fromNode.updateSchemaAndSignatures(varSchemaAndSignatures);
     }
 
     @Override
-    public String calculateHowProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
-        Map<String, List<String>> schemaAndSignatures = criteriaNode.schemaAndSignatures();
+    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
 
-        for (String varName : schemaAndSignatures.keySet()) {
+        return fromNode.calculateWhyProv(row);
+    }
 
-            List<String> schemaList = varSchemaAndSignatures.getOrDefault(varName, new ArrayList<>());
-            schemaList.addAll(schemaAndSignatures.get(varName));
-            varSchemaAndSignatures.put(varName, schemaList);
-        }
+    @Override
+    public String calculateHowProv(Map<String, Object> row) {
 
-        String prov = fromNode.calculateHowProv(row, varSchemaAndSignatures);
+        String prov = fromNode.calculateHowProv(row);
         if (!prov.isEmpty()) {
-            return fromNode.calculateHowProv(row, varSchemaAndSignatures) + " x 1";
+            return fromNode.calculateHowProv(row) + " x 1";
         }
         return "";
     }

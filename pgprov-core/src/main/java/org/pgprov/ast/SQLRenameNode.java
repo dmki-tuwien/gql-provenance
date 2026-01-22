@@ -2,10 +2,7 @@ package org.pgprov.ast;
 
 import org.pgprov.Globals;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SQLRenameNode extends SQLNode {
 
@@ -59,29 +56,41 @@ public class SQLRenameNode extends SQLNode {
     }
 
     @Override
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
-        return from.calculateWhyProv(row, varSchemaAndSignatures);
-    }
-
-    @Override
-    public String calculateHowProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
 
         for (String key : rename.keySet()) {
             if (!key.contains(".")) {
                 List<String> value = varSchemaAndSignatures.remove(Globals.VAR_PREFIX + rename.get(key));
-                varSchemaAndSignatures.put(Globals.VAR_PREFIX + key, value);
+                if(value!=null){
+                    varSchemaAndSignatures.put(Globals.VAR_PREFIX + key, value);
+                }
+            }
+        }
+        from.updateSchemaAndSignatures(varSchemaAndSignatures);
 
+    }
+
+    @Override
+    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
+        return from.calculateWhyProv(row);
+    }
+
+    @Override
+    public String calculateHowProv(Map<String, Object> row) {
+
+        for (String key : rename.keySet()) {
+            if (!key.contains(".")) {
                 Object rowVal = row.remove(Globals.VAR_PREFIX + rename.get(key));
                 row.put(Globals.VAR_PREFIX + key, rowVal);
             }
         }
-        return from.calculateHowProv(row, varSchemaAndSignatures);
+        return from.calculateHowProv(row);
     }
 
     @Override
-    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row) {
 
-        Map<String, Set<Object>> whereProv = from.calculateWhereProv(row, varSchemaAndSignatures);
+        Map<String, Set<Object>> whereProv = from.calculateWhereProv(row);
 
         for (String key : rename.keySet()) {
             Set<Object> prov = whereProv.remove(key);

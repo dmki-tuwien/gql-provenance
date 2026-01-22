@@ -60,6 +60,7 @@ public class GetWhyProvenance {
         System.out.println("SQL AST: " + processor.getSQLAST().toString(0));
         Result result = tx.execute(updatedQuery, params);
 
+        processor.getSQLAST().updateSchemaAndSignatures( new HashMap<>());
         Grouper<Map<String, Object>,List<List<String>>, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new);
         return grouper.process(result.stream()).map(row-> new Row(row.getResult(), row.getProv()));
     }
