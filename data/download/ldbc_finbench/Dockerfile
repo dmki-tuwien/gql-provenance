@@ -33,21 +33,23 @@ RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel && \
 # Clone the FinBench DataGen repository
 RUN git clone https://github.com/ldbc/ldbc_finbench_datagen.git /home/user/ldbc_finbench_datagen
 
-#WORKDIR /home/user/ldbc_finbench_datagen
-#RUN chmod +x ./scripts/get-spark-to-home.sh
+WORKDIR /home/user/ldbc_finbench_datagen
+RUN chmod +x ./scripts/get-spark-to-home.sh
 #
 #COPY scripts/run_local.sh ./scripts/run_local.sh
 #RUN chmod +x ./scripts/run_local.sh
 
 ## Deploy Spark
-#RUN ./scripts/get-spark-to-home.sh
+RUN ./scripts/get-spark-to-home.sh
 
 # Set environment variables
-#ENV SPARK_HOME=/root/spark-3.2.2-bin-hadoop3.2
-#ENV PATH=$SPARK_HOME/bin:$PATH
+ENV SPARK_HOME=/root/spark-3.2.2-bin-hadoop3.2
+ENV PATH=$SPARK_HOME/bin:$PATH
 
 # Build the project using Maven
-#RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests
+
+RUN chmod +x ./scripts/run_paramgen.sh
 
 # Set the working directory
 WORKDIR /workspace

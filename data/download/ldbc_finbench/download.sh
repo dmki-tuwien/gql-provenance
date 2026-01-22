@@ -7,7 +7,9 @@ PARAMS_DIR=$1/params/finbench
 
 declare -A DATASET_MAPPING=(
   ["0.1"]="https://datasets.ldbcouncil.org/finbench/sf0.1.tar.gz"
+  ["0.3"]="https://datasets.ldbcouncil.org/finbench/sf0.3.tar.gz"
   ["1"]="https://datasets.ldbcouncil.org/finbench/sf1.tar.gz"
+  ["3"]="https://datasets.ldbcouncil.org/finbench/sf3.tar.gz"
   ["10"]="https://datasets.ldbcouncil.org/finbench/sf10.tar.gz"
 )
 

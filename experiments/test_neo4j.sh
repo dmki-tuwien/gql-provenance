@@ -14,7 +14,7 @@ docker-compose up -d
 echo "Waiting for Neo4j to be ready..."
 sleep 15
 
-echo "Switch db to $DATASET\_$SCALE_FACTOR"
+echo "Switch db to $DATASET $SCALE_FACTOR"
 docker compose exec --user root neo4j sh -c "/scripts/activate_db.sh"
 
 echo "Waiting..."
@@ -31,8 +31,24 @@ echo "Restart Neo4j"
 docker compose up -d
 
 echo "Waiting..."
-sleep 15
+sleep 30
+
+docker compose exec -u neo4j neo4j cypher-shell -u $USERNAME -p $PASSWORD "ALTER DATABASE neo4j SET DEFAULT LANGUAGE CYPHER 25;"
+
+docker compose exec --user root test-driver sh -c "/app/scripts/setup.sh"
 
 docker compose exec test-driver sh -c "java -jar app.jar"
+
+docker compose exec --user root test-driver sh -c "/app/scripts/setup.sh"
+
+docker compose down
+
+
+
+
+
+
+
+
 
 

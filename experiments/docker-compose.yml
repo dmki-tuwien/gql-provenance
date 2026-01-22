@@ -27,10 +27,11 @@ services:
     image: pgprov-test-driver
     container_name: koumudi-test-driver
     volumes:
-      - ./src/main/resources:/app/resources
       - ${PARAMS_DIR}:/app/params
-      - ./driver/configs/config.properties:/app/config.properties
-      - ./driver/target/pgprov_test_driver-1.0.jar:/app/app.jar
       - ./result:/app/result
+      - ./driver/src/main/resources:/app/resources
+      - ./driver/configs/config.properties:/app/config.properties
+      - ./driver/scripts:/app/scripts
+      - ./driver/target/pgprov_test_driver-1.0.jar:/app/app.jar
     working_dir: /app
     tty: true

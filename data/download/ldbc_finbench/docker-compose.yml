@@ -9,6 +9,7 @@ services:
       - ./datagen:/home/user/ldbc_finbench
       - /data/pgprov/finbench:/home/user/data # host path : container path
       - ./post_process:/home/user/scripts
+      - /data/pgprov/params/finbench/sf_${SCALE_FACTORS}/sf${SCALE_FACTORS}_read_params:/home/user/params
     working_dir: /home/user
     tty: true
     stdin_open: true

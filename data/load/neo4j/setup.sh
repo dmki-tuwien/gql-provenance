@@ -17,6 +17,10 @@ cp ../../plugin/target/${PLUGIN} ./setup/plugins/
 
 echo "Setup Database and import data"
 cp ./env/import.env .env
+
+echo "Env variables"
+cat .env
+
 docker compose up -d
 
 echo "Waiting for Neo4j to be ready..."
