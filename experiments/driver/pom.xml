@@ -2,15 +2,23 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>org.pgprov.driver</groupId>
-    <artifactId>driver</artifactId>
-    <name>pgprov_test_driver</name>
+    <artifactId>pgprov_test_driver</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
 
-    <name>driver</name>
+    <name>PGProv Test Driver</name>
     <url>http://maven.apache.org</url>
+
+    <properties>
+        <java.version>21</java.version>
+
+        <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
+        <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -29,6 +37,12 @@
             <version>1.10.0</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.14.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.2</version>
@@ -43,8 +57,58 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <release>9</release>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.pgprov.driver.App</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <goals><goal>enforce</goal></goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion><version>${java.version}</version></requireJavaVersion>
+                                <requireMavenVersion><version>${maven.version}</version></requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven-shade-plugin.version}</version>
+                <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>org.pgprov.driver.App</mainClass>
+                        </transformer>
+                    </transformers>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
