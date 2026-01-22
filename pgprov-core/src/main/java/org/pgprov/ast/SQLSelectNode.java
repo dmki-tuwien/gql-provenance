@@ -47,11 +47,11 @@ public class SQLSelectNode extends SQLNode {
 
         Map<String, List<String>> schemaAndSignatures = criteriaNode.schemaAndSignatures();
 
-        for (String varName : schemaAndSignatures.keySet()) {
+        for (Map.Entry<String, List<String>> entry : schemaAndSignatures.entrySet()) {
 
-            List<String> schemaList = varSchemaAndSignatures.getOrDefault(varName, new ArrayList<>());
-            schemaList.addAll(schemaAndSignatures.get(varName));
-            varSchemaAndSignatures.put(varName, schemaList);
+            varSchemaAndSignatures
+                    .computeIfAbsent(entry.getKey(), k -> new ArrayList<>())
+                    .addAll(entry.getValue());
         }
 
         fromNode.updateSchemaAndSignatures(varSchemaAndSignatures);

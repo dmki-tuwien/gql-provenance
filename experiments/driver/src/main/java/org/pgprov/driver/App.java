@@ -24,6 +24,22 @@ public class App
     public static Properties appSettings;
     public static List<String> provenanceModels = List.of("Why", "Where","How");
 
+    public static Double median(List<Double> values) {
+        if (values.isEmpty()) {
+            throw new IllegalArgumentException("List is empty");
+        }
+
+        List<Double> copy = new ArrayList<>(values); // don’t mutate caller
+        Collections.sort(copy);
+
+        int n = copy.size();
+        if (n % 2 == 1) {
+            return copy.get(n / 2);
+        } else {
+            return (copy.get(n / 2 - 1) + copy.get(n / 2)) / 2.0;
+        }
+    }
+
     private static void runExperiments(Neo4jDbDriver driver, Map<String, Pair<String, Map<String,Object>>> finalQueries, String provModel){
 
         Map<String, Double> queryRunTimes = new HashMap<>();  // stores per query per param
@@ -74,7 +90,7 @@ public class App
 
             for (Map.Entry<String, Double> entry : queryRunTimes.entrySet()) {
 
-                String queryParamKey = entry.getKey().substring(0, entry.getKey().lastIndexOf('_'));
+                String queryParamKey = entry.getKey().substring(0, entry.getKey().lastIndexOf('_')+1);
                 String paramKey = entry.getKey().substring(entry.getKey().lastIndexOf('_'));
                 latencyWriter.write(appSettings.getProperty("dataset") + ","
                         + appSettings.getProperty("scale_factor") + ","

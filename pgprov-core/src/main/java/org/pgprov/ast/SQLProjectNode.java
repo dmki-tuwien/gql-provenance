@@ -10,8 +10,8 @@ public class SQLProjectNode extends SQLNode {
 
     private final Set<String> columns;
     private final SQLNode fromNode;
-    private final Map<String, List<String>> schemaAndSignatures;
-    private final Set<String> newVars;
+    private Map<String, List<String>> schemaAndSignatures;
+    private Set<String> newVars;
     private final boolean passToSubquery;
 
     public SQLProjectNode(Set<String> columns, SQLNode fromNode, Map<String, List<String>> schemaAndSignatures, Set<String> newVars, boolean passToSubquery) {
@@ -42,7 +42,7 @@ public class SQLProjectNode extends SQLNode {
         Set<String> returnVars = new HashSet<>();
         if (!passToSubquery) {
             returnVars.addAll(fromNode.getReturnVarsForRewriting());
-            returnVars.addAll(schemaAndSignatures.keySet());
+            if(schemaAndSignatures!=null) returnVars.addAll(schemaAndSignatures.keySet());
         }
         return returnVars;
     }
@@ -51,9 +51,9 @@ public class SQLProjectNode extends SQLNode {
     public void setReturnVarsForRewriting(Set<String> returnVars) {
 
         for (String returnVar : returnVars) {
-            if (!schemaAndSignatures.containsKey(returnVar)) {
-                newVars.add(returnVar);
-            }
+            if ( schemaAndSignatures!= null && schemaAndSignatures.containsKey(returnVar)) continue;
+            if(this.newVars == null) this.newVars = new HashSet<>();
+            newVars.add(returnVar);
         }
     }
 
@@ -65,7 +65,7 @@ public class SQLProjectNode extends SQLNode {
     @Override
     public void updateVarInSchemaAndSignatures(String varName) {
 
-        if (schemaAndSignatures.containsKey(varName)) {
+        if (schemaAndSignatures!= null && schemaAndSignatures.containsKey(varName)) {
             List<String> entry = schemaAndSignatures.remove(varName);
 
             String newVar = varName;
@@ -82,11 +82,12 @@ public class SQLProjectNode extends SQLNode {
     @Override
     public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
 
-        for (String varName : schemaAndSignatures.keySet()) {
-
-            List<String> schemaList = varSchemaAndSignatures.getOrDefault(varName, new ArrayList<>());
-            schemaList.addAll(schemaAndSignatures.get(varName));
-            varSchemaAndSignatures.put(varName, schemaList);
+        if(schemaAndSignatures!=null) {
+            for (Map.Entry<String, List<String>> entry : schemaAndSignatures.entrySet()) {
+                varSchemaAndSignatures
+                        .computeIfAbsent(entry.getKey(), k->new ArrayList<>())
+                        .addAll(entry.getValue());
+            }
         }
         fromNode.updateSchemaAndSignatures(varSchemaAndSignatures);
 

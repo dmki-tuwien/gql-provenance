@@ -169,7 +169,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
                     SQLNode from = ctx.simpleLinearQueryStatement() != null ? sqlNodes.get(ctx.simpleLinearQueryStatement()) : initialRelation == null ? new SQLEmptyNode() : initialRelation;
 
-                    sqlNodes.put(ctx, new SQLProjectNode(varNames, from, new HashMap<>(schemasAndsignatures), new HashSet<>(), false));
+                    sqlNodes.put(ctx, new SQLProjectNode(varNames, from, new HashMap<>(schemasAndsignatures), null, false));
                     schemasAndsignatures.clear();
                 } else {
 
@@ -187,7 +187,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
                     SQLNode from = ctx.simpleLinearQueryStatement() != null ? sqlNodes.get(ctx.simpleLinearQueryStatement()) : initialRelation == null ? new SQLEmptyNode() : initialRelation;
 
-                    SQLNode projectNode = new SQLProjectNode(varNames, from, new HashMap<>(schemasAndsignatures), new HashSet<>(), false);
+                    SQLNode projectNode = new SQLProjectNode(varNames, from, new HashMap<>(schemasAndsignatures), null, false);
                     schemasAndsignatures.clear();
 
                     if (renaming) {
@@ -212,6 +212,8 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 SQLNode sqlNode = sqlNodes.get(ctx);
                 Set<String> returnVars = sqlNode.getReturnVarsForRewriting();
                 Set<String> externalReturnVars = sqlNode.getExternalVarsForRewriting();
+
+                if(externalReturnVars == null){ externalReturnVars = new HashSet<>(); }
                 externalReturnVars.addAll(returnVars);
 
                 GQLParser.ReturnStatementContext returnStatementCtx = ctx.primitiveResultStatement().returnStatement();
@@ -302,7 +304,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 if (preStatementContext == null) {
                     sqlNodes.put(statement, sqlNodes.get(statement.callQueryStatement()));
                 } else {
-                    sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(statement.callQueryStatement()), new HashMap<>()));
+                    sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(statement.callQueryStatement()), null));
                 }
 
                 preStatementContext = statement;
@@ -336,7 +338,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                     if (preStatementContext == null) {
                         sqlNodes.put(statement, sqlNodes.get(primitiveQueryStatement.letStatement()));
                     } else {
-                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.letStatement()), new HashMap<>()));
+                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.letStatement()), null));
                     }
                     preStatementContext = statement;
                 } else if(primitiveQueryStatement.orderByAndPageStatement() == null) {
@@ -414,7 +416,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 if (from == null) {
                     from = sqlNodes.get(pathPatternContext);
                 } else {
-                    from = new SQLJoin(from, sqlNodes.get(pathPatternContext), new HashMap<>());
+                    from = new SQLJoin(from, sqlNodes.get(pathPatternContext), null);
                 }
             }
             sqlNodes.put(ctx, from);
@@ -459,7 +461,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 initialRelation = new SQLProjectNode(Arrays.stream(
                                 varScopeCtx.bindingVariableReferenceList().getText().split(",")
                         )
-                        .collect(Collectors.toSet()), sqlNodes.get(subqueryScopes.get(ctx)), new HashMap<>(), new HashSet<>(), true);
+                        .collect(Collectors.toSet()), sqlNodes.get(subqueryScopes.get(ctx)), null, null, true);
             }
         }
     }

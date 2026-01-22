@@ -39,7 +39,9 @@ public class SQLJoin extends SQLNode {
     @Override
     public Set<String> getReturnVarsForRewriting() {
         Set<String> returnVars = new HashSet<>();
-        returnVars.addAll(schemaAndSignatures.keySet());
+        if(schemaAndSignatures != null) {
+            returnVars.addAll(schemaAndSignatures.keySet());
+        }
         returnVars.addAll(this.left.getReturnVarsForRewriting());
         returnVars.addAll(this.right.getReturnVarsForRewriting());
         return returnVars;
@@ -48,7 +50,7 @@ public class SQLJoin extends SQLNode {
     @Override
     public void updateVarInSchemaAndSignatures(String varName) {
 
-        if (schemaAndSignatures.containsKey(varName)) {
+        if (schemaAndSignatures!= null && schemaAndSignatures.containsKey(varName)) {
             List<String> entry = schemaAndSignatures.remove(varName);
 
             String newVar = varName;
@@ -69,17 +71,19 @@ public class SQLJoin extends SQLNode {
 
         Map<String, List<String>> tempSchemaAndSignatures = new HashMap<>();
 
-        for (String varName : schemaAndSignatures.keySet()) {
+        if(schemaAndSignatures != null) {
+            for (Map.Entry<String,List<String>> entry : schemaAndSignatures.entrySet()) {
 
-            tempSchemaAndSignatures
-                    .computeIfAbsent(varName,k->new ArrayList<>())
-                    .addAll(schemaAndSignatures.get(varName));
+                tempSchemaAndSignatures
+                        .computeIfAbsent(entry.getKey(), k -> new ArrayList<>())
+                        .addAll(entry.getValue());
+            }
         }
 
-        for (String varName : varSchemaAndSignatures.keySet()) {
+        for (Map.Entry<String,List<String>> entry : varSchemaAndSignatures.entrySet()) {
             tempSchemaAndSignatures
-                    .computeIfAbsent(varName,k->new ArrayList<>())
-                    .addAll(varSchemaAndSignatures.get(varName));
+                    .computeIfAbsent(entry.getKey(), k->new ArrayList<>())
+                    .addAll(entry.getValue());
         }
 
         this.left.updateSchemaAndSignatures(tempSchemaAndSignatures);

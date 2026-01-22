@@ -58,10 +58,10 @@ public class SQLRelationNode extends SQLNode {
 
     public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures) {
 
-        for (String var : varSchemaAndSignatures.keySet()) {
+        for (Map.Entry<String, List<String>> entry : varSchemaAndSignatures.entrySet()) {
             schemaAndSignatures
-                    .computeIfAbsent(var, k -> new ArrayList<>())
-                    .addAll(varSchemaAndSignatures.get(var));
+                    .computeIfAbsent(entry.getKey(), k -> new ArrayList<>())
+                    .addAll(entry.getValue());
         }
     }
 
@@ -80,22 +80,24 @@ public class SQLRelationNode extends SQLNode {
                 }
             }
 
-                for (String key : schemaAndSignatures.keySet()) {
+            for (Map.Entry<String, List<String>> schemaSet : schemaAndSignatures.entrySet()) {
+                String key = schemaSet.getKey();
+                if(key.startsWith(Globals.PATH_PREFIX) && !row.containsKey(key)) continue;
 
-                if (!key.startsWith(Globals.PATH_PREFIX) && row.containsKey(key) && !(row.get(key).equals(Globals.EXTERNAL_VAR_VALUE))) {
-
-                    if (row.get(key) instanceof List<?> list) {
-                        for (Object entity : list) {
-                            List<String> varSchema = schemaAndSignatures.get(key);
-                            appendEntityAnnotations(varSchema, (Entity) entity, whyProvenance);
-                        }
-                    } else {
-                        Entity entity = (Entity) row.get(key);
-                        List<String> varSchema = schemaAndSignatures.get(key);
-                        appendEntityAnnotations(varSchema, entity, whyProvenance);
-                    }
-
+                Object value = row.get(key);
+                if (value == null ||value.equals(Globals.EXTERNAL_VAR_VALUE)) {
+                    continue;
                 }
+
+                List<String> varSchema = schemaSet.getValue();
+                if (row.get(key) instanceof List<?> list) {
+                    for (Object entity : list) {
+                        appendEntityAnnotations(varSchema, (Entity) entity, whyProvenance);
+                    }
+                } else if(value instanceof Entity entity) {
+                    appendEntityAnnotations(varSchema, entity, whyProvenance);
+                }
+
             }
         }
 
@@ -112,70 +114,56 @@ public class SQLRelationNode extends SQLNode {
         StringBuilder provenance = new StringBuilder();
 
         Object relValue = row.get(relation);
-        if (relValue != null && !relValue.equals(Globals.EXTERNAL_VAR_VALUE)) {
+        if (relValue == null){
+            return provenance.toString();
+        }else if(relValue.equals(Globals.EXTERNAL_VAR_VALUE)){
+            return provenance.toString();
+        }
 
-            Map<String, Set<String>> varsAnnotations = new HashMap<>();
+        Map<String, Set<String>> varsAnnotations = new HashMap<>();
 
-            for (String key : schemaAndSignatures.keySet()) {
-                if (key.startsWith(Globals.PATH_PREFIX)) {
-                    continue;
-                }
+        for (Map.Entry<String, List<String>> entry : schemaAndSignatures.entrySet()) {
 
-                Object value = row.get(key);
-                if (value != null && !value.equals(Globals.EXTERNAL_VAR_VALUE)) {
+            System.out.println("My schema"+ schemaAndSignatures);
+            String key = entry.getKey();
 
-
-                    if (value instanceof List<?> list) {
-                        for (Object entity : list) {
-
-                            Set<String> varSchemaAnn = new HashSet<>();
-                            List<String> varSchema = schemaAndSignatures.get(key);
-                            appendEntityAnnotations(varSchema, (Entity) entity, varSchemaAnn);
-
-                            String entityAnn = (String) ((Entity) entity).getAnnotation();
-
-                            varsAnnotations
-                                    .computeIfAbsent(entityAnn, k -> new HashSet<>())
-                                    .addAll(varSchemaAnn);
-                        }
-                    } else {
-                        Entity entity = (Entity) value;
-                        Set<String> varSchemaAnn = new HashSet<>();
-                        List<String> varSchema = schemaAndSignatures.get(key);
-                        appendEntityAnnotations(varSchema, entity, varSchemaAnn);
-
-                        String entityAnn = (String) entity.getAnnotation();
-
-                        varsAnnotations
-                                .computeIfAbsent(entityAnn, k -> new HashSet<>())
-                                .addAll(varSchemaAnn);
-                    }
-
-
-                }
+            if (key.startsWith(Globals.PATH_PREFIX)) {
+                continue;
             }
 
-            Path path = (Path) row.get(relation);
+            Object value = row.get(key);
+            if (value == null ||value.equals(Globals.EXTERNAL_VAR_VALUE)) {
+                continue;
+            }
 
-            if (path != null) {
+            List<String> varSchema = entry.getValue();
 
-                boolean first = true;
-                // construct the path induced graph
-                for (Entity entity : path) {
-                    String entityAnn = (String) entity.getAnnotation();
+            if (value instanceof List<?> list) {
+                for (Object entity : list) {
+                    collectAnnotations(varSchema, (Entity)entity, varsAnnotations);
+                }
+            } else {
+                collectAnnotations(varSchema, (Entity) value, varsAnnotations);
+            }
 
-                    if (!first) {
-                        provenance.append(" x ");
-                    }
-                    first = false;
+            System.out.println("Var annotations"+ varsAnnotations);
+            Path path = (Path) relValue;
+            boolean first = true;
+            // construct the path induced graph
+            for (Entity entity : path) {
 
-                    Set<String> varSchemaAnns = varsAnnotations.get(entityAnn);
-                    if (varSchemaAnns != null && !varSchemaAnns.isEmpty()) {
-                        provenance.append("(").append(entityAnn).append("+").append(String.join("+", varSchemaAnns)).append(")");
-                    } else {
-                        provenance.append(entityAnn);
-                    }
+                if (!first) {
+                    provenance.append(" x ");
+                }
+                first = false;
 
+                String entityAnn = (String) entity.getAnnotation();
+
+                Set<String> varSchemaAnns = varsAnnotations.get(entityAnn);
+                if (varSchemaAnns != null && !varSchemaAnns.isEmpty()) {
+                    provenance.append("(").append(entityAnn).append("+").append(String.join("+", varSchemaAnns)).append(")");
+                } else {
+                    provenance.append(entityAnn);
                 }
             }
         }
@@ -183,27 +171,37 @@ public class SQLRelationNode extends SQLNode {
         return provenance.toString();
     }
 
-    private Set<String> appendEntityAnnotations(List<String> varSchema, Entity entity, Set<String> whyProvenance) {
+    private void collectAnnotations(List<String> varSchema, Entity entity, Map<String, Set<String>> varsAnnotations) {
         // construct the varschema for entity
 
-        if(varSchema != null) {
-            for (String attr : varSchema) {
-                String origAttr = extractOrigAttr(attr);
-                if (attr.startsWith(Globals.PROP_ANNOT_KEY_PREFIX)) {
-                    String ann = (String) entity.getPropertyAnnotation(origAttr);
-                    if (ann != null) {
-                        whyProvenance.add(ann);
-                    }
-                } else if (attr.startsWith(Globals.LBL_ANNOT_KEY_PREFIX)) {
-                    String ann = (String) entity.getLabelAnnotation(origAttr);
-                    if (ann != null) {
-                        whyProvenance.add(ann);
-                    }
-                }
+        if (varSchema == null || varSchema.isEmpty() || entity == null) return;
+
+        String entityAnn = (String) entity.getAnnotation();
+        Set<String> target = varsAnnotations
+                .computeIfAbsent(entityAnn, k -> new HashSet<>());
+        appendEntityAnnotations(varSchema, entity, target);
+    }
+
+    private void appendEntityAnnotations(List<String> varSchema, Entity entity, Set<String> whyProvenance) {
+        // construct the varschema for entity
+
+        if (varSchema == null || varSchema.isEmpty() || entity == null) return;
+
+        for (String attr : varSchema) {
+            String origAttr = extractOrigAttr(attr);
+            String ann = null;
+
+            if (attr.startsWith(Globals.PROP_ANNOT_KEY_PREFIX)) {
+                ann = (String) entity.getPropertyAnnotation(origAttr);
+            } else if (attr.startsWith(Globals.LBL_ANNOT_KEY_PREFIX)) {
+                ann = (String) entity.getLabelAnnotation(origAttr);
+            }
+
+            if(ann!=null){
+                whyProvenance.add(ann);
             }
         }
 
-        return whyProvenance;
     }
 
     private String extractOrigAttr(String attr) {

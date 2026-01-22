@@ -14,15 +14,6 @@ WHERE $START_TIME < edge3.createTime < $END_TIME
 RETURN other.id AS otherId, loan.loanAmount AS sumLoanAmount, loan.balance AS sumLoanBalance
 ORDER BY sumLoanAmount DESC;
 
-//finbench-2.1
-MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(accounts:ACCOUNT)
-MATCH p=(accounts)<-[edge2:TRANSFER]-{1,3}(other:ACCOUNT)
-MATCH (other)<-[edge3:DEPOSIT]-(loan:LOAN)
-//WITH p, other, loan
-WHERE $START_TIME < edge3.createTime < $END_TIME
-RETURN other.id AS otherId, loan.loanAmount AS sumLoanAmount, loan.balance AS sumLoanBalance
-ORDER BY sumLoanAmount DESC;
-
 //finbench-3
 MATCH (src:ACCOUNT {id: $ID1})-[edge1:TRANSFER]->(dst:ACCOUNT {id: $ID2}),
 (src)<-[edge2:TRANSFER]-(other:ACCOUNT)<-[edge3:TRANSFER]-(dst)
@@ -32,11 +23,26 @@ AND $START_TIME < edge3.createTime < $END_TIME
 RETURN other.id, edge2, edge2.amount, edge3, edge3.amount
 ORDER BY edge2.amount+edge3.amount DESC;
 
-//finbench-4
+//finbench-4.3
 MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(src:ACCOUNT),
 p=(src)-[edge2:TRANSFER]->{1,3}(dst:ACCOUNT)
 RETURN p AS path1
 ORDER BY path1 DESC;
+
+//finbench-4.1
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(src:ACCOUNT),
+p=(src)-[edge2:TRANSFER]->(dst:ACCOUNT)
+RETURN p AS path1;
+
+//finbench-4.2
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(src:ACCOUNT),
+p=(src)-[edge2:TRANSFER]->{1,2}(dst:ACCOUNT)
+RETURN p AS path1;
+
+//finbench-4.4
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(src:ACCOUNT),
+p=(src)-[edge2:TRANSFER]->{1,4}(dst:ACCOUNT)
+RETURN p AS path1;
 
 //finbench-5
 MATCH (src1:ACCOUNT)-[edge1:TRANSFER]->(mid:ACCOUNT)-[edge2:WITHDRAW]->(dstCard:ACCOUNT {id: $ID, accoutType: 'debit card'})
@@ -51,7 +57,7 @@ WHERE $START_TIME < edge1.createTime < $END_TIME AND edge1.amount > $THRESHOLD
 AND $START_TIME < edge2.createTime < $END_TIME AND edge2.amount > $THRESHOLD
 RETURN src AS Src, dst AS Dst, edge1.amount AS edge1Amount, edge2.amount AS edge2Amount;
 
-//finbench-7
+//finbench-7.3
 MATCH
 (loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT),
 p=(src)-[edge234:TRANSFER|WITHDRAW]->{1,3}(dst:ACCOUNT)
@@ -61,25 +67,35 @@ RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
 ORDER BY loanAmount DESC;
 
 //finbench-7.1
-MATCH (loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT)
-MATCH p=(src)-[edge234:TRANSFER|WITHDRAW]->{1,3}(dst:ACCOUNT)
+MATCH
+(loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT),
+p=(src)-[edge234:TRANSFER|WITHDRAW]->(dst:ACCOUNT)
+WHERE // enforce that the timestamps of edge1 and all edge234 edges are within the selected window
+$START_TIME < edge1.createTime < $END_TIME
+RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
+ORDER BY loanAmount DESC;
+
+//finbench-7.2
+MATCH
+(loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT),
+p=(src)-[edge234:TRANSFER|WITHDRAW]->{1,2}(dst:ACCOUNT)
+WHERE // enforce that the timestamps of edge1 and all edge234 edges are within the selected window
+$START_TIME < edge1.createTime < $END_TIME
+RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
+ORDER BY loanAmount DESC;
+
+//finbench-7.4
+MATCH
+(loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT),
+p=(src)-[edge234:TRANSFER|WITHDRAW]->{1,4}(dst:ACCOUNT)
 WHERE // enforce that the timestamps of edge1 and all edge234 edges are within the selected window
 $START_TIME < edge1.createTime < $END_TIME
 RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
 ORDER BY loanAmount DESC;
 
 //finbench-8
-MATCH (loan:LOAN)-[edge1:DEPOSIT]->(mid:ACCOUNT {id: $ID})-[edge2:REPAY]->(LOAN),
+MATCH (loan:LOAN)-[edge1:DEPOSIT]->(mid:ACCOUNT {id: $ID})-[edge2:REPAY]->(loan),
 (up:ACCOUNT)-[edge3:TRANSFER]->(mid)-[edge4:TRANSFER]->(down:ACCOUNT)
-WHERE edge1.amount > $THRESHOLD AND $START_TIME < edge1.createTime < $END_TIME
-AND edge2.amount > $THRESHOLD AND $START_TIME < edge2.createTime < $END_TIME
-AND edge3.amount > $THRESHOLD AND $START_TIME < edge3.createTime < $END_TIME
-AND edge4.amount > $THRESHOLD AND $START_TIME < edge4.createTime < $END_TIME
-RETURN edge1.amount AS edge1Amount, edge2.amount AS edge2Amount, edge3.amount AS edge3Amount, edge4.amount AS edge4Amount;
-
-//finbench-8.1
-MATCH (loan:LOAN)-[edge1:DEPOSIT]->(mid:ACCOUNT {id: $ID})-[edge2:REPAY]->(LOAN)
-MATCH (up:ACCOUNT)-[edge3:TRANSFER]->(mid)-[edge4:TRANSFER]->(down:ACCOUNT)
 WHERE edge1.amount > $THRESHOLD AND $START_TIME < edge1.createTime < $END_TIME
 AND edge2.amount > $THRESHOLD AND $START_TIME < edge2.createTime < $END_TIME
 AND edge3.amount > $THRESHOLD AND $START_TIME < edge3.createTime < $END_TIME

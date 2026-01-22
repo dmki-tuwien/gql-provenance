@@ -1,15 +1,16 @@
 # DB Access
 database=NEO4J
-database.url=bolt://0.0.0.0:7687
+database.url=bolt://neo4j:7687
 database.dbName=neo4j
 database.user=neo4j
 database.password=12345678
 
+#query_file=/app/resources/queries/finbench/simple_queries.cypher
+#param_folder=/app/resources/params/finbench/sf_0.1/
 #Query Related
-query_file=/app/resources/queries/finbench/simple_queries.cypher
-#query_file=/app/resources/queries/{{DATASET}}_queries.cypher
-param_folder=/app/resources/params/finbench/sf_0.1/
-#param_folder=/app/params/{{DATASET}}/sf_{{SCALE_FACTOR}}/
+query_file=/app/resources/queries/{{DATASET}}.cypher
+param_folder=/app/params/{{DATASET}}/sf_{{SCALE_FACTOR}}/
+param_map_file=/app/resources/param_maps/{{DATASET}}.csv
 warm_up_query_count=50
 test_query_count=10
 

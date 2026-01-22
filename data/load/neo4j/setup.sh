@@ -13,7 +13,7 @@ chmod -R 777 ./setup/
 # Copy the plugin
 echo
 echo "Copy the plugin ${PLUGIN}"
-cp ../../plugin/target/${PLUGIN} ./setup/plugins/
+cp ../../../plugin/target/${PLUGIN} ./setup/plugins/
 
 echo "Setup Database and import data"
 cp ./env/import.env .env
@@ -38,8 +38,8 @@ sleep 15
 
 docker compose exec --user root neo4j sh -c "/scripts/fix_access_rights.sh"
 
-echo "Waiting for Neo4j to be ready..."
-sleep 15
-
-docker compose down
+#echo "Waiting for Neo4j to be ready..."
+#sleep 15
+#
+#docker compose down
 
