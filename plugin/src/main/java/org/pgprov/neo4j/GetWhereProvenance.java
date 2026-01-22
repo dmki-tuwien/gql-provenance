@@ -60,7 +60,9 @@ public class GetWhereProvenance {
         System.out.println("SQL AST: " + processor.getSQLAST());
         Result result = tx.execute(updatedQuery, params);
 
-
+        if(result.hasNext()){
+            processor.getSQLAST().updateSchemaAndSignatures(new HashMap<>());
+        }
         Grouper<Map<String, Object>,Map<String, Set<Object>>, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new);
         return grouper.process(result.stream()).map(row-> new GetWhereProvenance.Row(row.getResult(), row.getProv()));
     }

@@ -25,7 +25,7 @@ public class AnnotateData {
                 Map.of("skip", skip, "limit", limit)
         );
 
-        int id = 0;
+        long id = skip;
 
         while (res.hasNext()) {
             Node node = (Node) res.next().get("n");
@@ -61,7 +61,7 @@ public class AnnotateData {
             id++;
         }
 
-        id = 0;
+        id = skip;
         Result relRes = tx.execute(
                 "MATCH ()-[e]->() RETURN e ORDER BY id(e) SKIP $skip LIMIT $limit",
                 Map.of("skip", skip, "limit", limit)

@@ -51,23 +51,30 @@ public class SQLSetOpNode extends SQLNode {
     }
 
     @Override
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
+
+        left.updateSchemaAndSignatures(varSchemaAndSignatures);
+        right.updateSchemaAndSignatures(varSchemaAndSignatures);
+    }
+
+    @Override
+    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
         Set<Set<String>> whyProv = new HashSet<>();
 
         if (op.equals(SetOperator.UNION)) {
-            whyProv.addAll(left.calculateWhyProv(row, varSchemaAndSignatures));
-            whyProv.addAll(right.calculateWhyProv(row, varSchemaAndSignatures));
+            whyProv.addAll(left.calculateWhyProv(row));
+            whyProv.addAll(right.calculateWhyProv(row));
         }
         return whyProv;
     }
 
     @Override
-    public String calculateHowProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public String calculateHowProv(Map<String, Object> row) {
         String leftProv, rightProv;
 
         if (op.equals(SetOperator.UNION)) {
-            leftProv = left.calculateHowProv(row, varSchemaAndSignatures);
-            rightProv = right.calculateHowProv(row, varSchemaAndSignatures);
+            leftProv = left.calculateHowProv(row);
+            rightProv = right.calculateHowProv(row);
 
             if (!leftProv.isEmpty() && !rightProv.isEmpty()) {
                 return "(" + leftProv + ") + (" + rightProv + ")";
@@ -82,11 +89,11 @@ public class SQLSetOpNode extends SQLNode {
     }
 
     @Override
-    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row) {
 
         if (op.equals(SetOperator.UNION)) {
-            Map<String, Set<Object>> whereLeftProv = left.calculateWhereProv(row, varSchemaAndSignatures);
-            Map<String, Set<Object>> whereRightProv = right.calculateWhereProv(row, varSchemaAndSignatures);
+            Map<String, Set<Object>> whereLeftProv = left.calculateWhereProv(row);
+            Map<String, Set<Object>> whereRightProv = right.calculateWhereProv(row);
 
             for (String key : whereRightProv.keySet()) {
                 whereLeftProv

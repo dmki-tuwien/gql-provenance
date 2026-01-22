@@ -4,9 +4,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.neo4j.driver.AuthTokens;
-import org.neo4j.driver.Driver;
-import org.neo4j.driver.GraphDatabase;
+import org.neo4j.driver.*;
 import org.neo4j.harness.Neo4j;
 import org.neo4j.harness.Neo4jBuilders;
 
@@ -118,4 +116,15 @@ public class GetWhyProvenanceTest {
 
     }
 
+    @Test
+    public void runTest( ) throws IOException {
+        try (Session session = driver.session()) {
+
+            String query = "MATCH (src:ACCOUNT)-[edge1:TRANSFER|WITHDRAW]->(mid:ACCOUNT {id: '236720455413667935'})-[edge2:TRANSFER|WITHDRAW]->(dst:ACCOUNT)\n" +
+                    "WHERE 0 < edge1.createTime < 999999999999 AND edge1.amount > 0\n" +
+                    "AND 0 < edge2.createTime < 999999999999 AND edge2.amount > 0\n" +
+                    "RETURN src AS Src, dst AS Dst, edge1.amount AS edge1Amount, edge2.amount AS edge2Amount";
+            Result record = session.run("CALL org.pgprov.getWhyProvenance(\"" + query + "\" , {})");
+        }
+    }
 }

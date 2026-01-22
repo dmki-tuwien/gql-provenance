@@ -51,11 +51,22 @@ public class SQLRelationNode extends SQLNode {
             }
 
             schemaAndSignatures.put(newVar, entry);
+
+
+        }
+    }
+
+    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures) {
+
+        for (String var : varSchemaAndSignatures.keySet()) {
+            schemaAndSignatures
+                    .computeIfAbsent(var, k -> new ArrayList<>())
+                    .addAll(varSchemaAndSignatures.get(var));
         }
     }
 
     @Override
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
 
         Set<String> whyProvenance = new HashSet<>();
         if (row.containsKey(relation) && !(row.get(relation).equals(Globals.EXTERNAL_VAR_VALUE))) {
@@ -69,23 +80,19 @@ public class SQLRelationNode extends SQLNode {
                 }
             }
 
-            for (String var : schemaAndSignatures.keySet()) {
-                varSchemaAndSignatures
-                        .computeIfAbsent(var, k -> new ArrayList<>())
-                        .addAll(schemaAndSignatures.get(var));
-            }
-
-            for (String key : varSchemaAndSignatures.keySet()) {
+                for (String key : schemaAndSignatures.keySet()) {
 
                 if (!key.startsWith(Globals.PATH_PREFIX) && row.containsKey(key) && !(row.get(key).equals(Globals.EXTERNAL_VAR_VALUE))) {
 
                     if (row.get(key) instanceof List<?> list) {
                         for (Object entity : list) {
-                            appendEntityAnnotations(varSchemaAndSignatures, key, (Entity) entity, whyProvenance);
+                            List<String> varSchema = schemaAndSignatures.get(key);
+                            appendEntityAnnotations(varSchema, (Entity) entity, whyProvenance);
                         }
                     } else {
                         Entity entity = (Entity) row.get(key);
-                        appendEntityAnnotations(varSchemaAndSignatures, key, entity, whyProvenance);
+                        List<String> varSchema = schemaAndSignatures.get(key);
+                        appendEntityAnnotations(varSchema, entity, whyProvenance);
                     }
 
                 }
@@ -100,7 +107,7 @@ public class SQLRelationNode extends SQLNode {
     }
 
     @Override
-    public String calculateHowProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public String calculateHowProv(Map<String, Object> row) {
 
         StringBuilder provenance = new StringBuilder();
 
@@ -109,14 +116,7 @@ public class SQLRelationNode extends SQLNode {
 
             Map<String, Set<String>> varsAnnotations = new HashMap<>();
 
-            for (String var : schemaAndSignatures.keySet()) {
-                varSchemaAndSignatures
-                        .computeIfAbsent(var, k -> new ArrayList<>())
-                        .addAll(schemaAndSignatures.get(var));
-            }
-
-            for (String key : varSchemaAndSignatures.keySet()) {
-
+            for (String key : schemaAndSignatures.keySet()) {
                 if (key.startsWith(Globals.PATH_PREFIX)) {
                     continue;
                 }
@@ -129,7 +129,8 @@ public class SQLRelationNode extends SQLNode {
                         for (Object entity : list) {
 
                             Set<String> varSchemaAnn = new HashSet<>();
-                            appendEntityAnnotations(varSchemaAndSignatures, key, (Entity) entity, varSchemaAnn);
+                            List<String> varSchema = schemaAndSignatures.get(key);
+                            appendEntityAnnotations(varSchema, (Entity) entity, varSchemaAnn);
 
                             String entityAnn = (String) ((Entity) entity).getAnnotation();
 
@@ -140,8 +141,8 @@ public class SQLRelationNode extends SQLNode {
                     } else {
                         Entity entity = (Entity) value;
                         Set<String> varSchemaAnn = new HashSet<>();
-
-                        appendEntityAnnotations(varSchemaAndSignatures, key, entity, varSchemaAnn);
+                        List<String> varSchema = schemaAndSignatures.get(key);
+                        appendEntityAnnotations(varSchema, entity, varSchemaAnn);
 
                         String entityAnn = (String) entity.getAnnotation();
 
@@ -182,21 +183,22 @@ public class SQLRelationNode extends SQLNode {
         return provenance.toString();
     }
 
-    private Set<String> appendEntityAnnotations(Map<String, List<String>> varSchemaAndSignatures, String key, Entity entity, Set<String> whyProvenance) {
+    private Set<String> appendEntityAnnotations(List<String> varSchema, Entity entity, Set<String> whyProvenance) {
         // construct the varschema for entity
-        List<String> varSchema = varSchemaAndSignatures.get(key);
 
-        for (String attr : varSchema) {
-            String origAttr = extractOrigAttr(attr);
-            if (attr.startsWith(Globals.PROP_ANNOT_KEY_PREFIX)) {
-                String ann = (String) entity.getPropertyAnnotation(origAttr);
-                if (ann != null) {
-                    whyProvenance.add(ann);
-                }
-            } else if (attr.startsWith(Globals.LBL_ANNOT_KEY_PREFIX)) {
-                String ann = (String) entity.getLabelAnnotation(origAttr);
-                if (ann != null) {
-                    whyProvenance.add(ann);
+        if(varSchema != null) {
+            for (String attr : varSchema) {
+                String origAttr = extractOrigAttr(attr);
+                if (attr.startsWith(Globals.PROP_ANNOT_KEY_PREFIX)) {
+                    String ann = (String) entity.getPropertyAnnotation(origAttr);
+                    if (ann != null) {
+                        whyProvenance.add(ann);
+                    }
+                } else if (attr.startsWith(Globals.LBL_ANNOT_KEY_PREFIX)) {
+                    String ann = (String) entity.getLabelAnnotation(origAttr);
+                    if (ann != null) {
+                        whyProvenance.add(ann);
+                    }
                 }
             }
         }

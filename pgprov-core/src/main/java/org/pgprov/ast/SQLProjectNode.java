@@ -80,7 +80,7 @@ public class SQLProjectNode extends SQLNode {
     }
 
     @Override
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
 
         for (String varName : schemaAndSignatures.keySet()) {
 
@@ -88,24 +88,22 @@ public class SQLProjectNode extends SQLNode {
             schemaList.addAll(schemaAndSignatures.get(varName));
             varSchemaAndSignatures.put(varName, schemaList);
         }
-        return fromNode.calculateWhyProv(row, varSchemaAndSignatures);
+        fromNode.updateSchemaAndSignatures(varSchemaAndSignatures);
+
     }
 
     @Override
-    public String calculateHowProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
-        for (String varName : schemaAndSignatures.keySet()) {
-
-            varSchemaAndSignatures
-                    .computeIfAbsent(varName, k -> new ArrayList<>())
-                    .addAll(schemaAndSignatures.get(varName));
-
-        }
-
-        return fromNode.calculateHowProv(row, varSchemaAndSignatures);
+    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
+        return fromNode.calculateWhyProv(row);
     }
 
     @Override
-    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
+    public String calculateHowProv(Map<String, Object> row) {
+        return fromNode.calculateHowProv(row);
+    }
+
+    @Override
+    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row) {
 
         Map<String, Set<Object>> whereProv = new HashMap<>();
 

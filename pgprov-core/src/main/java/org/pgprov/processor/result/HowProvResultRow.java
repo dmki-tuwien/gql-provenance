@@ -11,8 +11,8 @@ public abstract class HowProvResultRow<S> extends ResultRow<S,String> {
     }
 
     @Override
-    public String calculateProvenance(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
-        return this.getSqlNode().calculateHowProv(row, new HashMap<>());
+    public String calculateProvenance(Map<String, Object> row) {
+        return this.getSqlNode().calculateHowProv(row);
     }
 
     @Override

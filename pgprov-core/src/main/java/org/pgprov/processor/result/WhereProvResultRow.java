@@ -12,8 +12,8 @@ public abstract class WhereProvResultRow<S> extends ResultRow<S,Map<String, Set<
     }
 
     @Override
-    public Map<String, Set<Object>> calculateProvenance(Map<String, Object> row, Map<String, List<String>> varSchemaAndSignatures) {
-        return this.getSqlNode().calculateWhereProv(row, new HashMap<>());
+    public Map<String, Set<Object>> calculateProvenance(Map<String, Object> row) {
+        return this.getSqlNode().calculateWhereProv(row);
     }
 
     @Override
