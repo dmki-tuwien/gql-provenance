@@ -127,7 +127,7 @@ public class Neo4jDbDriver implements DbDriver {
 //                if(!records.isEmpty()) {
 //                    records.getLast().toString();
 //                }
-                System.out.println(queryIdentifier+ ", " + params + ", " + rec.get("durationMs").asDouble()+", "+  records.size());
+                System.out.println("Results: "+queryIdentifier+ ", " + params + ", " + rec.get("durationMs").asDouble()+", "+  records.size());
             }
 
             return Pair.of(rec.get("durationMs").asDouble(), rec.get("size").asInt());
@@ -140,7 +140,7 @@ public class Neo4jDbDriver implements DbDriver {
         Random rng = new Random();
         Map<String, Pair<String, Map<String,Object>>> finalQueries = new LinkedHashMap<>();
 
-        int execCount = Integer.parseInt(appSettings.getProperty("test_query_count"));
+        int execCount = Integer.parseInt(appSettings.getProperty("test_param_count"));
         // loop the query set an execCount times
             //Construct map of all queries (latency checked)
         for (Map.Entry<String, String> entry : originalQueries.entrySet()) {
@@ -180,7 +180,7 @@ public class Neo4jDbDriver implements DbDriver {
             }
         }
 
-        System.out.println("Generated query count"+finalQueries.size());
+        System.out.println("Generated query count: "+finalQueries.size());
         return finalQueries;
 
     }

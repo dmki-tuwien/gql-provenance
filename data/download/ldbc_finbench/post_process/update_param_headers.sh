@@ -6,18 +6,24 @@ param_folder=$1
 
 ## Update params headers
 ## For sf 0.1
+##sed -i '1s/.*/id1|id2|startTime|endTime/' /data/pgprov/params/finbench/sf_0.3/sf0.3_read_params/complex_3_param.csv
 ##sed -i '1s/.*/id1|id2|startTime|endTime|truncationLimit|truncationOrder/' /data/pgprov/params/finbench/sf_0.3/sf0.3_read_params/complex_3_param.csv
 ##sed -i '1s/.*/id1|id2|startTime|endTime|truncationLimit|truncationOrder/' /data/pgprov/params/finbench/sf_0.3/sf0.3_read_params/complex_4_param.csv
-##sed -i '1s/.*/pid1|pid2|startTime|endTime/' /data/pgprov/params/finbench/sf_0.1/sf0.1_read_params/params_9.csv
+##sed -i '1s/.*/pid1|pid2|startTime|endTime/' /data/pgprov/params/finbench/sf_0.1/sf0.1_read_params/complex_10_param.csv
+##sed -i '1s/.*/id|threshold|startTime|endTime|truncationLimit|truncationOrder/' /data/pgprov/params/finbench/sf_1/sf1_read_params/complex_8_param.csv
+##sed -i '1s/.*/id|startTime|endTime|truncationLimit|truncationOrder/' /data/pgprov/params/finbench/sf_1/sf1_read_params/complex_5_param.csv
 
 # header mappings
 declare -A HEADERS=(
   [1]="id|startTime|endTime|truncationLimit|truncationOrder"
   [2]="id|startTime|endTime|truncationLimit|truncationOrder"
   [3]="id1|id2|startTime|endTime|truncationLimit|truncationOrder"
+  [4]="id1|id2|startTime|endTime"
+  [5]="id|startTime|endTime|truncationLimit|truncationOrder"
 #  [3]="id1|id2|startTime|endTime"
   [6]="id|threshold1|threshold2|startTime|endTime|truncationLimit|truncationOrder"
   [7]="id|threshold|startTime|endTime|truncationLimit|truncationOrder"
+  [8]="id|threshold|startTime|endTime|truncationLimit|truncationOrder"
   [10]="pid1|pid2|startTime|endTime"
 
 )

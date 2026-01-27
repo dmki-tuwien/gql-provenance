@@ -1,4 +1,4 @@
-//finbench-1
+//finbench-1.3
 MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,3}(other:ACCOUNT),
 (other)<-[edge2:SIGN_IN]-(medium:MEDIUM {isBlocked: true})
 //WITH p, other, medium
@@ -6,8 +6,104 @@ WHERE $START_TIME < edge2.createTime < $END_TIME
 RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.type AS mediumType
 ORDER BY accountDistance ASC;
 
-//finbench-2
+//finbench-1.1.1
+MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->(other:ACCOUNT),
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {isBlocked: true})
+//WITH p, other, medium
+WHERE $START_TIME < edge2.createTime < $END_TIME
+RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.type AS mediumType
+ORDER BY accountDistance ASC;
+
+//finbench-1.1
+MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,1}(other:ACCOUNT),
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {isBlocked: true})
+//WITH p, other, medium
+WHERE $START_TIME < edge2.createTime < $END_TIME
+RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.type AS mediumType
+ORDER BY accountDistance ASC;
+
+//finbench-1.2
+MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,2}(other:ACCOUNT),
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {isBlocked: true})
+//WITH p, other, medium
+WHERE $START_TIME < edge2.createTime < $END_TIME
+RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.type AS mediumType
+ORDER BY accountDistance ASC;
+
+//finbench-1.4
+MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,4}(other:ACCOUNT),
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {isBlocked: true})
+//WITH p, other, medium
+WHERE $START_TIME < edge2.createTime < $END_TIME
+RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.type AS mediumType
+ORDER BY accountDistance ASC;
+
+//finbench-1.5
+MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,5}(other:ACCOUNT),
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {isBlocked: true})
+//WITH p, other, medium
+WHERE $START_TIME < edge2.createTime < $END_TIME
+RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.type AS mediumType
+ORDER BY accountDistance ASC;
+
+//finbench-1.6
+MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,6}(other:ACCOUNT),
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {isBlocked: true})
+//WITH p, other, medium
+WHERE $START_TIME < edge2.createTime < $END_TIME
+RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.type AS mediumType
+ORDER BY accountDistance ASC;
+
+//finbench-2.3
 MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(accounts:ACCOUNT), p=(accounts)<-[edge2:TRANSFER]-{1,3}(other:ACCOUNT),
+(other)<-[edge3:DEPOSIT]-(loan:LOAN)
+//WITH p, other, loan
+WHERE $START_TIME < edge3.createTime < $END_TIME
+RETURN other.id AS otherId, loan.loanAmount AS sumLoanAmount, loan.balance AS sumLoanBalance
+ORDER BY sumLoanAmount DESC;
+
+//finbench-2.1.1
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(accounts:ACCOUNT), p=(accounts)<-[edge2:TRANSFER]-(other:ACCOUNT),
+(other)<-[edge3:DEPOSIT]-(loan:LOAN)
+//WITH p, other, loan
+WHERE $START_TIME < edge3.createTime < $END_TIME
+RETURN other.id AS otherId, loan.loanAmount AS sumLoanAmount, loan.balance AS sumLoanBalance
+ORDER BY sumLoanAmount DESC;
+
+//finbench-2.1
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(accounts:ACCOUNT), p=(accounts)<-[edge2:TRANSFER]-{1,1}(other:ACCOUNT),
+(other)<-[edge3:DEPOSIT]-(loan:LOAN)
+//WITH p, other, loan
+WHERE $START_TIME < edge3.createTime < $END_TIME
+RETURN other.id AS otherId, loan.loanAmount AS sumLoanAmount, loan.balance AS sumLoanBalance
+ORDER BY sumLoanAmount DESC;
+
+//finbench-2.2
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(accounts:ACCOUNT), p=(accounts)<-[edge2:TRANSFER]-{1,2}(other:ACCOUNT),
+(other)<-[edge3:DEPOSIT]-(loan:LOAN)
+//WITH p, other, loan
+WHERE $START_TIME < edge3.createTime < $END_TIME
+RETURN other.id AS otherId, loan.loanAmount AS sumLoanAmount, loan.balance AS sumLoanBalance
+ORDER BY sumLoanAmount DESC;
+
+//finbench-2.4
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(accounts:ACCOUNT), p=(accounts)<-[edge2:TRANSFER]-{1,4}(other:ACCOUNT),
+(other)<-[edge3:DEPOSIT]-(loan:LOAN)
+//WITH p, other, loan
+WHERE $START_TIME < edge3.createTime < $END_TIME
+RETURN other.id AS otherId, loan.loanAmount AS sumLoanAmount, loan.balance AS sumLoanBalance
+ORDER BY sumLoanAmount DESC;
+
+//finbench-2.5
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(accounts:ACCOUNT), p=(accounts)<-[edge2:TRANSFER]-{1,5}(other:ACCOUNT),
+(other)<-[edge3:DEPOSIT]-(loan:LOAN)
+//WITH p, other, loan
+WHERE $START_TIME < edge3.createTime < $END_TIME
+RETURN other.id AS otherId, loan.loanAmount AS sumLoanAmount, loan.balance AS sumLoanBalance
+ORDER BY sumLoanAmount DESC;
+
+//finbench-2.6
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(accounts:ACCOUNT), p=(accounts)<-[edge2:TRANSFER]-{1,6}(other:ACCOUNT),
 (other)<-[edge3:DEPOSIT]-(loan:LOAN)
 //WITH p, other, loan
 WHERE $START_TIME < edge3.createTime < $END_TIME
@@ -29,8 +125,13 @@ p=(src)-[edge2:TRANSFER]->{1,3}(dst:ACCOUNT)
 RETURN p AS path1
 ORDER BY path1 DESC;
 
-//finbench-4.1
+//finbench-4.1.1
 MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(src:ACCOUNT),
+p=(src)-[edge2:TRANSFER]->(dst:ACCOUNT)
+RETURN p AS path1;
+
+//finbench-4.1
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->{1,1}(src:ACCOUNT),
 p=(src)-[edge2:TRANSFER]->(dst:ACCOUNT)
 RETURN p AS path1;
 
@@ -42,6 +143,16 @@ RETURN p AS path1;
 //finbench-4.4
 MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(src:ACCOUNT),
 p=(src)-[edge2:TRANSFER]->{1,4}(dst:ACCOUNT)
+RETURN p AS path1;
+
+//finbench-4.5
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(src:ACCOUNT),
+p=(src)-[edge2:TRANSFER]->{1,5}(dst:ACCOUNT)
+RETURN p AS path1;
+
+//finbench-4.6
+MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(src:ACCOUNT),
+p=(src)-[edge2:TRANSFER]->{1,6}(dst:ACCOUNT)
 RETURN p AS path1;
 
 //finbench-5
@@ -66,10 +177,19 @@ $START_TIME < edge1.createTime < $END_TIME
 RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
 ORDER BY loanAmount DESC;
 
-//finbench-7.1
+//finbench-7.1.1
 MATCH
 (loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT),
 p=(src)-[edge234:TRANSFER|WITHDRAW]->(dst:ACCOUNT)
+WHERE // enforce that the timestamps of edge1 and all edge234 edges are within the selected window
+$START_TIME < edge1.createTime < $END_TIME
+RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
+ORDER BY loanAmount DESC;
+
+//finbench-7.1
+MATCH
+(loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT),
+p=(src)-[edge234:TRANSFER|WITHDRAW]->{1,1}(dst:ACCOUNT)
 WHERE // enforce that the timestamps of edge1 and all edge234 edges are within the selected window
 $START_TIME < edge1.createTime < $END_TIME
 RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
@@ -93,6 +213,24 @@ $START_TIME < edge1.createTime < $END_TIME
 RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
 ORDER BY loanAmount DESC;
 
+//finbench-7.5
+MATCH
+(loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT),
+p=(src)-[edge234:TRANSFER|WITHDRAW]->{1,5}(dst:ACCOUNT)
+WHERE // enforce that the timestamps of edge1 and all edge234 edges are within the selected window
+$START_TIME < edge1.createTime < $END_TIME
+RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
+ORDER BY loanAmount DESC;
+
+//finbench-7.6
+MATCH
+(loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT),
+p=(src)-[edge234:TRANSFER|WITHDRAW]->{1,6}(dst:ACCOUNT)
+WHERE // enforce that the timestamps of edge1 and all edge234 edges are within the selected window
+$START_TIME < edge1.createTime < $END_TIME
+RETURN dst.id AS dstId, loan.loanAmount AS loanAmount
+ORDER BY loanAmount DESC;
+
 //finbench-8
 MATCH (loan:LOAN)-[edge1:DEPOSIT]->(mid:ACCOUNT {id: $ID})-[edge2:REPAY]->(loan),
 (up:ACCOUNT)-[edge3:TRANSFER]->(mid)-[edge4:TRANSFER]->(down:ACCOUNT)
@@ -102,8 +240,44 @@ AND edge3.amount > $THRESHOLD AND $START_TIME < edge3.createTime < $END_TIME
 AND edge4.amount > $THRESHOLD AND $START_TIME < edge4.createTime < $END_TIME
 RETURN edge1.amount AS edge1Amount, edge2.amount AS edge2Amount, edge3.amount AS edge3Amount, edge4.amount AS edge4Amount;
 
-//finbench-9
+//finbench-9.3
 MATCH path1=(comp:COMPANY)<-[:INVEST]-{1,3}(investor{id: $PID})
+WHERE (investor:COMPANY) OR (investor:PERSON)
+RETURN comp.id, investor, investor.business as type
+ORDER BY comp.id DESC;
+
+//finbench-9.1.1
+MATCH path1=(comp:COMPANY)<-[:INVEST]-(investor{id: $PID})
+WHERE (investor:COMPANY) OR (investor:PERSON)
+RETURN comp.id, investor, investor.business as type
+ORDER BY comp.id DESC;
+
+//finbench-9.1
+MATCH path1=(comp:COMPANY)<-[:INVEST]-{1,1}(investor{id: $PID})
+WHERE (investor:COMPANY) OR (investor:PERSON)
+RETURN comp.id, investor, investor.business as type
+ORDER BY comp.id DESC;
+
+//finbench-9.2
+MATCH path1=(comp:COMPANY)<-[:INVEST]-{1,2}(investor{id: $PID})
+WHERE (investor:COMPANY) OR (investor:PERSON)
+RETURN comp.id, investor, investor.business as type
+ORDER BY comp.id DESC;
+
+//finbench-9.4
+MATCH path1=(comp:COMPANY)<-[:INVEST]-{1,4}(investor{id: $PID})
+WHERE (investor:COMPANY) OR (investor:PERSON)
+RETURN comp.id, investor, investor.business as type
+ORDER BY comp.id DESC;
+
+//finbench-9.5
+MATCH path1=(comp:COMPANY)<-[:INVEST]-{1,5}(investor{id: $PID})
+WHERE (investor:COMPANY) OR (investor:PERSON)
+RETURN comp.id, investor, investor.business as type
+ORDER BY comp.id DESC;
+
+//finbench-9.6
+MATCH path1=(comp:COMPANY)<-[:INVEST]-{1,6}(investor{id: $PID})
 WHERE (investor:COMPANY) OR (investor:PERSON)
 RETURN comp.id, investor, investor.business as type
 ORDER BY comp.id DESC;

@@ -13,6 +13,11 @@ import java.util.*;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.pgprov.driver.db.Neo4jDbDriver;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Hello world!
@@ -22,7 +27,7 @@ public class App
 {
 
     public static Properties appSettings;
-    public static List<String> provenanceModels = List.of("Why", "Where","How");
+    public static List<String> provenanceModels = List.of("How");
 
     public static Double median(List<Double> values) {
         if (values.isEmpty()) {
@@ -50,14 +55,17 @@ public class App
 
         int execCount = Integer.parseInt(appSettings.getProperty("test_query_count"));
 
-        for (int j=0;j< execCount;j++) {
+//        for (int j=0;j< execCount;j++) {
+
+//            System.out.println("-----------------------------------------Start Execution Round ("+j+")---------------------------------------------");
             Collections.shuffle(queryList); // randomize query execution order
 
+            int j=0;
             for (Map.Entry<String, Pair<String, Map<String, Object>>> query : queryList) {
 
                 String queryParamKey = query.getKey().substring(0, query.getKey().lastIndexOf('_'));
-                System.out.println("Sending request = "+query.getValue());
                 Pair<String, Map<String, Object>> queryParamMap = query.getValue();
+                System.out.println("Sending request = "+ queryParamKey+","+queryParamMap.getRight());
 
                 // query execution
                 Pair<Double, Integer> testResults = driver.runTestProcedureQuery(queryParamKey, queryParamMap.getKey(), queryParamMap.getValue());
@@ -74,9 +82,11 @@ public class App
                     queryRunCount.put(query.getKey(), testResults.getRight());
                 }
 //                System.out.println(query.getKey() + ", " + queryParamMap.getValue() + ", " + durationMs);
+                j+=1;
+                if(j%100==0) System.out.println("Execution finished for :"+ j);
 
             }
-        }
+//        }
 
         // Write execTimes to file
         File latencyFile = new File(latencyFilePath);
@@ -268,21 +278,26 @@ public class App
                 String queryParam = paramHeader.getKey();
                 String fileParam = paramHeader.getValue();
 
-                if(headers.contains(fileParam)){
-                    if(paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "long")){
+                if(headers.contains(fileParam)) {
+                    if (paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "long")) {
                         recordMap.put(queryParam, Long.parseLong(record.get(fileParam)));
-                    }else if(paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "double")){
+                    } else if (paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "double")) {
                         recordMap.put(queryParam, Double.parseDouble(record.get(fileParam)));
-                    }else if(paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "int")){
+                    } else if (paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "int")) {
                         recordMap.put(queryParam, Integer.parseInt(record.get(fileParam)));
+                    }else if (paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "datetime")) {
+                            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                            ZonedDateTime dt = ZonedDateTime.parse(record.get(fileParam), formatter);
+                            // Convert to UTC explicitly
+                        recordMap.put(queryParam, dt.withZoneSameInstant(ZoneOffset.UTC));
+                    } else if (paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "date")) {
+                            LocalDate date = LocalDate.parse(record.get(fileParam), DateTimeFormatter.ISO_LOCAL_DATE);
+                        recordMap.put(queryParam, date.atStartOfDay(ZoneOffset.UTC));
                     }else{
                         recordMap.put(queryParam, record.get(fileParam));
                     }
 
                 }
-            }
-            if(headers.contains("threshold")){
-                recordMap.put("THRESHOLD", Integer.parseInt(record.get("threshold")));
             }
 
             records.add(recordMap);
@@ -379,14 +394,14 @@ public class App
 
             driver.connect();
 
+            System.out.println("Warm up cache: Start");
+            warmUpCache(driver,tsrQueries, paramMap);
+
             for(String provModel: provenanceModels) {
 
-                System.out.println("Warm up cache: Start");
-                warmUpCache(driver,tsrQueries, paramMap);
-
-                System.out.println("Running experiments for dataset: "+ appSettings.getProperty("dataset")
+                System.out.println("-------------------------------------------- Running experiments for dataset: "+ appSettings.getProperty("dataset")
                         +", scaleFactor: "+appSettings.getProperty("scale_factor")
-                        + ", provenance model: "+provModel);
+                        + ", provenance model: "+provModel+" -----------------------------");
 
                 Map<String, Pair<String, Map<String,Object>>> finalQueries = driver.generateTestQuerySet(tsrQueries, provModel, paramMap);
                 runExperiments(driver, finalQueries, provModel);

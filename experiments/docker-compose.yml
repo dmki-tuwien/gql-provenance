@@ -18,10 +18,12 @@ services:
       NEO4J_apoc_export_file_enabled: "true"
       NEO4J_server_directories_logs: /logs
       NEO4J_server_directories_import: /import
+      NEO4J_internal_dbms_tx__log_fail__on__corrupted__log__files: "false"
     volumes:
       - ./neo4j/setup/plugins:/var/lib/neo4j/plugins
       - ./neo4j/setup/scripts:/scripts
       - ${PERSIST_DB_DIR}:/var/lib/neo4j/data
+      - ${PARAMS_DIR}:/import
   test-driver:
     build: ./driver
     image: pgprov-test-driver

@@ -12,7 +12,8 @@ query_file=/app/resources/queries/{{DATASET}}.cypher
 param_folder=/app/params/{{DATASET}}/sf_{{SCALE_FACTOR}}/
 param_map_file=/app/resources/param_maps/{{DATASET}}.csv
 warm_up_query_count=50
-test_query_count=10
+test_query_count=1
+test_param_count=20
 
 # Result related
 output_folder=/app/result/metrics/{{TEST_RUN}}

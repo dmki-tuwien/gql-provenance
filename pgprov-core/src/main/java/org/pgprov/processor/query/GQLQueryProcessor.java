@@ -117,7 +117,6 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
         if (processStage.equals(Globals.ProcessStage.REWRITE) && ctx.queryConjunction() != null && ctx.queryConjunction().setOperator() != null) {
             SQLNode sqlNode = sqlNodes.get(ctx);
             Set<String> returnVars = sqlNode.getReturnVarsForRewriting();
-
             SQLNode left = sqlNodes.get(ctx.compositeQueryExpression());
             left.setReturnVarsForRewriting(returnVars);
             SQLNode right = sqlNodes.get(ctx.compositeQueryPrimary());
@@ -319,7 +318,6 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                         sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.matchStatement()), new HashMap<>(schemasAndsignatures)));
                         schemasAndsignatures.clear();
                     }
-
                     preStatementContext = statement;
 
                 } else if (primitiveQueryStatement.filterStatement() != null) {
@@ -332,8 +330,8 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                         from = sqlNodes.get(preStatementContext);
                     }
                     sqlNodes.put(statement, new SQLSelectNode(from, (SQLSelectCriteriaNode) sqlNodes.get(primitiveQueryStatement.filterStatement())));
-
                     preStatementContext = statement;
+
                 } else if (primitiveQueryStatement.letStatement() != null) {
                     if (preStatementContext == null) {
                         sqlNodes.put(statement, sqlNodes.get(primitiveQueryStatement.letStatement()));
@@ -343,6 +341,9 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                     preStatementContext = statement;
                 } else if(primitiveQueryStatement.orderByAndPageStatement() == null) {
                     throw new RuntimeException("Only match, filter and let statements are supported.");
+                }else {
+                    sqlNodes.put(statement, sqlNodes.get(preStatementContext));
+                    schemasAndsignatures.clear();
                 }
             }
 
