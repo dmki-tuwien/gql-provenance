@@ -12,7 +12,8 @@ public abstract class HowProvResultRow<S> extends ResultRow<S,String> {
 
     @Override
     public String calculateProvenance(Map<String, Object> row) {
-        return this.getSqlNode().calculateHowProv(row);
+        return "";
+//        return this.getSqlNode().calculateHowProv(row);
     }
 
     @Override

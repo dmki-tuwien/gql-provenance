@@ -1,6 +1,6 @@
 {
   "simpleQuery": {
-    "query": "MATCH (n:Person) RETURN n.name",
+    "query": "MATCH (src:ACCOUNT {id: 'Alice'}) CALL (src){ MATCH (src)-[edge:TRANSFER]->(dst1:ACCOUNT)\n  WHERE $START_TIME < edge.createTime < $END_TIME\n  RETURN edge.amount AS amount\n  UNION\n  MATCH (src)<-[edge:TRANSFER]-(dst2:ACCOUNT)\n  WHERE $START_TIME < edge.createTime < $END_TIME\n  RETURN edge.amount AS amount\n}\nRETURN src, amount;",
     "test-value": [
       {
         "result": {
@@ -11,7 +11,7 @@
         ],
         "how-prov": "(n1001+k2001+l4001)",
         "where-prov": {
-          "n.name": ["k2001"]
+          "prov_n_name": ["k2001"]
         }
       },
       {
@@ -23,7 +23,7 @@
         ],
         "how-prov": "(n1002+k2002+l4002)",
         "where-prov": {
-          "n.name": ["k2002"]
+          "prov_n_name": ["k2002"]
         }
       },
       {
@@ -35,7 +35,7 @@
         ],
         "how-prov": "(n1003+l4003+k2003)",
         "where-prov": {
-          "n.name": ["k2003"]
+          "prov_n_name": ["k2003"]
         }
       },
       {
@@ -47,7 +47,7 @@
         ],
         "how-prov": "(n1004+k2004+l4004)",
         "where-prov": {
-          "n.name": ["k2004"]
+          "prov_n_name": ["k2004"]
         }
       },
       {
@@ -59,7 +59,7 @@
         ],
         "how-prov": "(n1005+k2005+l4005)",
         "where-prov": {
-          "n.name": ["k2005"]
+          "prov_n_name": ["k2005"]
         }
       }
     ]
@@ -77,8 +77,8 @@
         ],
         "how-prov": "(n1001+k2001+k3001+l4001)",
         "where-prov": {
-          "name": ["k2001"],
-          "age": ["k3001"]
+          "prov_name": ["k2001"],
+          "prov_age": ["k3001"]
         }
       }
     ]
@@ -96,8 +96,8 @@
         ],
         "how-prov": "(n1005+k2005+l4005)",
         "where-prov": {
-          "name": ["k2005"],
-          "age": []
+          "prov_name": ["k2005"],
+          "prov_age": []
         }
       }
     ]
@@ -115,8 +115,8 @@
         ],
         "how-prov": "(n1001+k2001+l4001) x (e7001+l5001) x n1002 x (e7002+l5002) x (n1003+k2003)",
         "where-prov": {
-          "sender": ["k2001"],
-          "receiver": ["k2003"]
+          "prov_sender": ["k2001"],
+          "prov_receiver": ["k2003"]
         }
       },
       {
@@ -129,8 +129,8 @@
         ],
         "how-prov": "(n1001+k2001+l4001) x (e7001+l5001) x (n1002+k2002)",
         "where-prov": {
-          "sender": ["k2001"],
-          "receiver": ["k2002"]
+          "prov_sender": ["k2001"],
+          "prov_receiver": ["k2002"]
         }
       },
       {
@@ -143,8 +143,8 @@
         ],
         "how-prov": "(n1002+k2002+l4002) x (e7002+l5002) x (n1003+k2003)",
         "where-prov": {
-          "sender": ["k2002"],
-          "receiver": ["k2003"]
+          "prov_sender": ["k2002"],
+          "prov_receiver": ["k2003"]
         }
       },
       {
@@ -157,8 +157,8 @@
         ],
         "how-prov": "(n1004+k2004+l4004) x (e7003+l5003) x (n1005+k2005)",
         "where-prov": {
-          "sender": ["k2004"],
-          "receiver": ["k2005"]
+          "prov_sender": ["k2004"],
+          "prov_receiver": ["k2005"]
         }
       }
     ]
@@ -183,8 +183,8 @@
         ],
         "how-prov": "(n1001+k2001) x (e7001+l5001) x (n1002+k2002)",
         "where-prov": {
-          "p": ["n1001", "e7001","n1002"],
-          "receiver": ["k2002"]
+          "prov_p": [["n1001", "e7001","n1002"]],
+          "prov_receiver": ["k2002"]
         }
       }
     ]
@@ -202,8 +202,8 @@
         ],
         "how-prov": "((n1001+k2001) x (e7001+l5001) x (n1002+k2002)) x ((n1002+k2002) x e7002 x n1003)",
         "where-prov": {
-          "sender": ["k2001"],
-          "receiver": ["k2002"]
+          "prov_sender": ["k2001"],
+          "prov_receiver": ["k2002"]
         }
       }
     ]
@@ -222,8 +222,8 @@
         ],
         "how-prov": "((n1001+k2001) x (e7001+l5001) x (n1002+k2002)) + ((n1001+k2001+k3001) x (e7001+l5001) x (n1002+k2002))",
         "where-prov": {
-          "sender": ["k2001"],
-          "receiver": ["k2002"]
+          "prov_sender": ["k2001"],
+          "prov_receiver": ["k2002"]
         }
       },
       {
@@ -236,8 +236,8 @@
         ],
         "how-prov": "(n1002+k2002) x (e7002+l5002) x (n1003+k2003)",
         "where-prov": {
-          "sender": ["k2002"],
-          "receiver": ["k2003"]
+          "prov_sender": ["k2002"],
+          "prov_receiver": ["k2003"]
         }
       },
       {
@@ -250,8 +250,8 @@
         ],
         "how-prov": "(n1004+k2004) x (e7003+l5003) x (n1005+k2005)",
         "where-prov": {
-          "sender": ["k2004"],
-          "receiver": ["k2005"]
+          "prov_sender": ["k2004"],
+          "prov_receiver": ["k2005"]
         }
       }
     ]
@@ -269,8 +269,8 @@
         ],
         "how-prov": "((n1001+k2001) x (e7001+l5001) x n1002) x (n1002 x (e7002+k6002) x (n1003+l4003))",
         "where-prov": {
-          "sender" : ["k2001"],
-          "amount": ["k6002"]
+          "prov_sender" : ["k2001"],
+          "prov_amount": ["k6002"]
         }
       }
     ]
@@ -288,8 +288,8 @@
         ],
         "how-prov": "((n1002+k2002+k3002)) x (((n1002+k2002+k3002)) x ((n1002+k2002) x (e7002+k6002) x n1003))",
         "where-prov": {
-          "sender" : ["k2002"],
-          "amount": ["k6002"]
+          "prov_sender" : ["k2002"],
+          "prov_amount": ["k6002"]
         }
       },
       {
@@ -302,8 +302,8 @@
         ],
         "how-prov": "((n1004+k2004+k3004)) x (((n1004+k2004+k3004)) x ((n1004+k2004) x (e7003+k6003) x n1005))",
         "where-prov": {
-          "sender" : ["k2004"],
-          "amount": ["k6003"]
+          "prov_sender" : ["k2004"],
+          "prov_amount": ["k6003"]
         }
       }
     ]

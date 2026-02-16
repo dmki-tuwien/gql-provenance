@@ -1,5 +1,7 @@
 #!/bin/bash
 
+
+## extract all zip files:  find . -type f -name '*.gz' -exec gunzip -f {} \;
 OUTPUT_DIR=$1/snb
 PARAMS_DIR=$1/params/snb
 #/data/pgprov
@@ -7,8 +9,10 @@ PARAMS_DIR=$1/params/snb
 
 declare -A DATASET_MAPPING=(
   ["0.1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf0.1-CsvBasic-LongDateFormatter.tar.zst"
-  ["1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf1-CsvBasic-LongDateFormatter.tar.zst"
-  ["10"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf10-CsvBasic-LongDateFormatter.tar.zst"
+#  ["1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf1-CsvBasic-LongDateFormatter.tar.zst"
+#  ["10"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf10-CsvBasic-LongDateFormatter.tar.zst"
+  ["1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi/files/bi-sf1-composite-merged-fk.tar.zst"
+  ["3"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi/files/bi-sf3-composite-merged-fk.tar.zst"
 )
 
 declare -A PARAMS_MAPPING=(

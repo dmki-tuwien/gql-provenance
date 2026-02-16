@@ -52,7 +52,7 @@ public class GetHowProvenance {
 
         ParseTreeWalker.DEFAULT.walk(processor, tree);
 
-        processor.setProcessStage(Globals.ProcessStage.REWRITE);
+        processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
 
         String updatedQuery = processor.getRewrittenQuery();
@@ -60,9 +60,6 @@ public class GetHowProvenance {
         System.out.println("SQL AST: " + processor.getSQLAST().toString(0));
         Result result = tx.execute(updatedQuery, params);
 
-        if(result.hasNext()){
-            processor.getSQLAST().updateSchemaAndSignatures(new HashMap<>());
-        }
         Grouper<Map<String, Object>, String, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new);
         return grouper.process(result.stream()).map(row-> new GetHowProvenance.Row(row.getResult(), row.getProv()));
     }

@@ -27,7 +27,7 @@ public class App
 {
 
     public static Properties appSettings;
-    public static List<String> provenanceModels = List.of("How");
+    public static List<String> provenanceModels = List.of("Why", "Where");
 
     public static Double median(List<Double> values) {
         if (values.isEmpty()) {
@@ -55,9 +55,9 @@ public class App
 
         int execCount = Integer.parseInt(appSettings.getProperty("test_query_count"));
 
-//        for (int j=0;j< execCount;j++) {
+        for (int k=0;k< execCount;k++) {
 
-//            System.out.println("-----------------------------------------Start Execution Round ("+j+")---------------------------------------------");
+            System.out.println("-----------------------------------------Start Execution Round ("+k+")---------------------------------------------");
             Collections.shuffle(queryList); // randomize query execution order
 
             int j=0;
@@ -86,7 +86,7 @@ public class App
                 if(j%100==0) System.out.println("Execution finished for :"+ j);
 
             }
-//        }
+        }
 
         // Write execTimes to file
         File latencyFile = new File(latencyFilePath);

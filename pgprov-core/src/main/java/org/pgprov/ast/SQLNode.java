@@ -1,5 +1,7 @@
 package org.pgprov.ast;
 
+import org.pgprov.Globals;
+
 import java.util.*;
 
 public abstract class SQLNode {
@@ -10,47 +12,17 @@ public abstract class SQLNode {
 
     public Set<String> getOriginalReturnVars() {
         return new HashSet<>();
-    }
+}
 
-    // get all initially returned variables to the parent
-    // 1. binding variables that are used for accessing properties and labels
-    // 2. path variables
-    public abstract Set<String> getReturnVarsForRewriting();
-
-    // set the return variable list to parent's return variables
-    // (only used with operations that follows Projections -
-    // to set return varibales in union queries)
-    public void setReturnVarsForRewriting(Set<String> returnVars) {
-        // not used
-    }
-
-    // get new variables after
-    // setting the return variables with parent's variables
-    public Set<String> getExternalVarsForRewriting() {
-        return new HashSet<>();
-
-    }
-
-    // update the temporary variables names in schema and signatures during rewriting to pass on through queries
-    public void updateVarInSchemaAndSignatures(String varName) {
-        // not used
-    }
-
-    ;
-
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
-        return new HashSet<>();
-    }
-
-    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row) {
-        return new HashMap<>();
-    }
-
-    public String calculateHowProv(Map<String, Object> row) {
-        return "";
-    }
-
-    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
+    public void updateSchemaAndSignatures(Set<String> varSchemaAndSignatures){
         //not used
     }
+
+    public abstract Map<String, String> storeWhereProvenanceEncodings(Globals.ProvenanceType provenanceModel, Map<String, String> returnColumns, Map<String,String> renames);
+
+    public abstract boolean updateWhereProvenanceEncodingVariable(String varName, SQLNode node);
+
+    public abstract Set<String> storeWhyProvenanceEncodings(Globals.ProvenanceType provenanceModel);
+
+    public abstract boolean updateWhyProvenanceEncodingVariable(String varName, SQLNode node);
 }

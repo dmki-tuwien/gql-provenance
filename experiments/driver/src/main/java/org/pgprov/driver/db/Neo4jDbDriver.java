@@ -143,9 +143,10 @@ public class Neo4jDbDriver implements DbDriver {
         int execCount = Integer.parseInt(appSettings.getProperty("test_param_count"));
         // loop the query set an execCount times
             //Construct map of all queries (latency checked)
+        List<String> repetitions = List.of(".1",".2",".3",".4",".5");
         for (Map.Entry<String, String> entry : originalQueries.entrySet()) {
 
-//            if(!entry.getKey().endsWith(".1")) {
+            if(!entry.getKey().contains(".") || entry.getKey().contains(".1.1")) {
 
                 List<Map<String, Object>> params = map.get(entry.getKey());
                 for (int i = 0; i <execCount; i++) {
@@ -161,21 +162,28 @@ public class Neo4jDbDriver implements DbDriver {
 
                     Pair<String, Map<String, Object>> provQueryMap = Pair.of(query, param);
                     finalQueries.put("prov_" + entry.getKey()+"_"+i, provQueryMap);
-//
-//                    if(originalQueries.containsKey(entry.getKey()+".1")) {
-//
-//                        String newKey = entry.getKey()+".1";
-//                        Pair<String, Map<String, Object>> queryMap1 = Pair.of(originalQueries.get(newKey), param);
-//
-//                        finalQueries.put("orig_" + newKey+"_"+i, queryMap1);
-//
-//                        String newQuery = "CALL org.pgprov.get" + provenanceModel + "Provenance(\"" + originalQueries.get(newKey)+ "\", $PARAMS);";
-//
-//                        Pair<String, Map<String, Object>> newprovQueryMap = Pair.of(newQuery, param);
-//                        finalQueries.put("prov_" + newKey+"_"+i, newprovQueryMap);
-//
-//                    }
-//                }
+
+                    if(entry.getKey().contains(".1.1")) {
+                        String[] parts = entry.getKey().split("\\."); // split by dot (escape it)
+                        String majorMinor = parts[0];
+
+                        for (String rep : repetitions) {
+                            if (originalQueries.containsKey(majorMinor + rep)) {
+
+                                String newKey = majorMinor + rep;
+                                Pair<String, Map<String, Object>> queryMap1 = Pair.of(originalQueries.get(newKey), param);
+
+                                finalQueries.put("orig_" + newKey + "_" + i, queryMap1);
+
+                                String newQuery = "CALL org.pgprov.get" + provenanceModel + "Provenance(\"" + originalQueries.get(newKey) + "\", $PARAMS);";
+
+                                Pair<String, Map<String, Object>> newprovQueryMap = Pair.of(newQuery, param);
+                                finalQueries.put("prov_" + newKey + "_" + i, newprovQueryMap);
+
+                            }
+                        }
+                    }
+                }
 
             }
         }

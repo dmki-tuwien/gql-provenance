@@ -1,5 +1,7 @@
 package org.pgprov.ast;
 
+import org.pgprov.Globals;
+
 import java.util.*;
 
 public class SQLSetOpNode extends SQLNode {
@@ -26,84 +28,93 @@ public class SQLSetOpNode extends SQLNode {
     }
 
     @Override
+    public Map<String, String> storeWhereProvenanceEncodings(Globals.ProvenanceType provenanceModel, Map<String,String> returnColumns, Map<String,String> renames){
+
+        Map<String, String>  provenanceEncodings = new HashMap<>();
+        Map<String, String>  leftProvenanceEncodings = this.left.storeWhereProvenanceEncodings(provenanceModel, returnColumns, renames);
+        Map<String, String>  rightProvenanceEncodings = this.right.storeWhereProvenanceEncodings(provenanceModel, returnColumns, renames);
+
+        if(leftProvenanceEncodings != null ) {
+            provenanceEncodings.putAll(leftProvenanceEncodings);
+        }
+
+        if(rightProvenanceEncodings != null ) {
+            provenanceEncodings.putAll(rightProvenanceEncodings);
+        }
+        return provenanceEncodings;
+    }
+
+    @Override
+    public boolean updateWhereProvenanceEncodingVariable(String varName, SQLNode node) {
+        boolean leftBool = this.left.updateWhereProvenanceEncodingVariable(varName, node);
+        boolean rightBool = this.right.updateWhereProvenanceEncodingVariable(varName, node);
+        return (leftBool || rightBool);
+    }
+
+    @Override
+    public Set<String> storeWhyProvenanceEncodings(Globals.ProvenanceType provenanceModel) {
+
+        Set<String> provenanceEncodings = new HashSet<>();
+        Set<String> leftProvenanceEncodings = this.left.storeWhyProvenanceEncodings(provenanceModel);
+        Set<String> rightProvenanceEncodings = this.right.storeWhyProvenanceEncodings(provenanceModel);
+
+        if(leftProvenanceEncodings != null ) {
+            provenanceEncodings.addAll(leftProvenanceEncodings);
+        }
+
+        if(rightProvenanceEncodings != null ) {
+            provenanceEncodings.addAll(rightProvenanceEncodings);
+        }
+
+        if(this.left instanceof SQLProjectNode leftNode){
+            leftNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        } else if (this.left instanceof SQLRenameNode leftNode) {
+            leftNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        } else if (this.left instanceof SQLSetOpNode leftNode) {
+            leftNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        }
+        if(this.right instanceof SQLProjectNode rightNode){
+            rightNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        } else if (this.right instanceof SQLRenameNode rightNode) {
+            rightNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        }else if (this.right instanceof SQLSetOpNode rightNode) {
+            rightNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        }
+        return provenanceEncodings;
+    }
+
+    @Override
+    public boolean updateWhyProvenanceEncodingVariable(String varName, SQLNode node) {
+        boolean leftBool = this.left.updateWhyProvenanceEncodingVariable(varName, node);
+        boolean rightBool = this.right.updateWhyProvenanceEncodingVariable(varName, node);
+        return (leftBool || rightBool);
+    }
+
+    public void storeProvenanceEncodingsFromUnion(Set<String> provenanceEncodings){
+
+        if(this.left instanceof SQLProjectNode leftNode){
+            leftNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        } else if (this.left instanceof SQLRenameNode leftNode) {
+            leftNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        }
+        if(this.right instanceof SQLProjectNode rightNode){
+            rightNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        } else if (this.right instanceof SQLRenameNode rightNode) {
+            rightNode.storeProvenanceEncodingsFromUnion(provenanceEncodings);
+        }
+    }
+
+
+    @Override
     public Set<String> getOriginalReturnVars() {
         return left.getOriginalReturnVars();
     }
 
     @Override
-    public Set<String> getReturnVarsForRewriting() {
-        Set<String> returnVars = new HashSet<>();
-        returnVars.addAll(left.getReturnVarsForRewriting());
-        returnVars.addAll(right.getReturnVarsForRewriting());
-        return returnVars;
-    }
+    public void updateSchemaAndSignatures(Set<String> varSchemaAndSignatures){
 
-    @Override
-    public void setReturnVarsForRewriting(Set<String> returnVars) {
-        left.setReturnVarsForRewriting(returnVars);
-        right.setReturnVarsForRewriting(returnVars);
-    }
-
-    @Override
-    public void updateVarInSchemaAndSignatures(String varName) {
-        left.updateVarInSchemaAndSignatures(varName);
-        right.updateVarInSchemaAndSignatures(varName);
-    }
-
-    @Override
-    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
-
-        left.updateSchemaAndSignatures(varSchemaAndSignatures);
-        right.updateSchemaAndSignatures(varSchemaAndSignatures);
-    }
-
-    @Override
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
-        Set<Set<String>> whyProv = new HashSet<>();
-
-        if (op.equals(SetOperator.UNION)) {
-            whyProv.addAll(left.calculateWhyProv(row));
-            whyProv.addAll(right.calculateWhyProv(row));
-        }
-        return whyProv;
-    }
-
-    @Override
-    public String calculateHowProv(Map<String, Object> row) {
-        String leftProv, rightProv;
-
-        if (op.equals(SetOperator.UNION)) {
-            leftProv = left.calculateHowProv(row);
-            rightProv = right.calculateHowProv(row);
-
-            if (!leftProv.isEmpty() && !rightProv.isEmpty()) {
-                return "(" + leftProv + ") + (" + rightProv + ")";
-            } else if (!leftProv.isEmpty()) {
-                return leftProv;
-            } else if (!rightProv.isEmpty()) {
-                return rightProv;
-            }
-
-        }
-        return "";
-    }
-
-    @Override
-    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row) {
-
-        if (op.equals(SetOperator.UNION)) {
-            Map<String, Set<Object>> whereLeftProv = left.calculateWhereProv(row);
-            Map<String, Set<Object>> whereRightProv = right.calculateWhereProv(row);
-
-            for (String key : whereRightProv.keySet()) {
-                whereLeftProv
-                        .computeIfAbsent(key, k -> new HashSet<>())
-                        .addAll(whereRightProv.get(key));
-            }
-            return whereLeftProv;
-        }
-        return new HashMap<>();
-
+        left.updateSchemaAndSignatures(new HashSet<>(varSchemaAndSignatures));
+        right.updateSchemaAndSignatures(new HashSet<>(varSchemaAndSignatures));
     }
 
 }

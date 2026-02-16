@@ -8,12 +8,14 @@ public class SQLJoin extends SQLNode {
 
     private final SQLNode left;
     private final SQLNode right;
-    private final Map<String, List<String>> schemaAndSignatures;
+    private final Set<String> schemaAndSignatures;
+    private final boolean subQueryInnerJoin;
 
-    public SQLJoin(SQLNode left, SQLNode right, Map<String, List<String>> schemaAndSignatures) {
+    public SQLJoin(SQLNode left, SQLNode right, Set<String> schemaAndSignatures, boolean subQueryInnerJoin) {
         this.left = left;
         this.right = right;
         this.schemaAndSignatures = schemaAndSignatures;
+        this.subQueryInnerJoin = subQueryInnerJoin;
     }
 
 
@@ -29,103 +31,69 @@ public class SQLJoin extends SQLNode {
     }
 
     @Override
-    public Set<String> getOriginalReturnVars() {
-        Set<String> returnVars = new HashSet<>();
-        returnVars.addAll(this.left.getOriginalReturnVars());
-        returnVars.addAll(this.right.getOriginalReturnVars());
-        return returnVars;
-    }
+    public Map<String, String> storeWhereProvenanceEncodings(Globals.ProvenanceType provenanceModel, Map<String, String> returnColumns, Map<String,String> renames){
+        // does not store
+        // get provenance encodings and forwards
+        Map<String, String> provenanceEncodings = new HashMap<>();
 
-    @Override
-    public Set<String> getReturnVarsForRewriting() {
-        Set<String> returnVars = new HashSet<>();
-        if(schemaAndSignatures != null) {
-            returnVars.addAll(schemaAndSignatures.keySet());
-        }
-        returnVars.addAll(this.left.getReturnVarsForRewriting());
-        returnVars.addAll(this.right.getReturnVarsForRewriting());
-        return returnVars;
-    }
-
-    @Override
-    public void updateVarInSchemaAndSignatures(String varName) {
-
-        if (schemaAndSignatures!= null && schemaAndSignatures.containsKey(varName)) {
-            List<String> entry = schemaAndSignatures.remove(varName);
-
-            String newVar = varName;
-            if (varName.startsWith(Globals.TEMP_VAR_PREFIX)) {
-                newVar = Globals.VAR_PREFIX + varName.substring(Globals.TEMP_VAR_PREFIX.length());
-            } else if (varName.startsWith(Globals.TEMP_PATH_PREFIX)) {
-                newVar = Globals.PATH_PREFIX + varName.substring(Globals.TEMP_PATH_PREFIX.length());
-            }
-            schemaAndSignatures.put(newVar, entry);
+        if(!subQueryInnerJoin) {
+            Map<String, String> leftProvenanceEncodings = this.left.storeWhereProvenanceEncodings(provenanceModel, returnColumns, renames);
+            provenanceEncodings.putAll(leftProvenanceEncodings);
         }
 
-        this.left.updateVarInSchemaAndSignatures(varName);
-        this.right.updateVarInSchemaAndSignatures(varName);
+        Map<String, String> rightProvenanceEncodings = this.right.storeWhereProvenanceEncodings(provenanceModel, returnColumns, renames);
+        provenanceEncodings.putAll(rightProvenanceEncodings);
+
+        return provenanceEncodings;
     }
 
     @Override
-    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
+    public boolean updateWhereProvenanceEncodingVariable(String varName, SQLNode node) {
+        boolean leftBool = this.left.updateWhereProvenanceEncodingVariable(varName, node);
+        boolean rightBool = this.right.updateWhereProvenanceEncodingVariable(varName, node);
+        return leftBool || rightBool;
+    }
 
-        Map<String, List<String>> tempSchemaAndSignatures = new HashMap<>();
+    @Override
+    public Set<String> storeWhyProvenanceEncodings(Globals.ProvenanceType provenanceModel) {
+        // does not store
+        // get provenance encodings and forwards
+        Set<String> provenanceEncodings = new HashSet<>();
+
+        if(!subQueryInnerJoin) {
+            Set<String> leftProvenanceEncodings = this.left.storeWhyProvenanceEncodings(provenanceModel);
+            provenanceEncodings.addAll(leftProvenanceEncodings);
+        }
+
+        Set<String> rightProvenanceEncodings = this.right.storeWhyProvenanceEncodings(provenanceModel);
+        provenanceEncodings.addAll(rightProvenanceEncodings);
 
         if(schemaAndSignatures != null) {
-            for (Map.Entry<String,List<String>> entry : schemaAndSignatures.entrySet()) {
-
-                tempSchemaAndSignatures
-                        .computeIfAbsent(entry.getKey(), k -> new ArrayList<>())
-                        .addAll(entry.getValue());
-            }
+            provenanceEncodings.addAll(schemaAndSignatures);
         }
 
-        for (Map.Entry<String,List<String>> entry : varSchemaAndSignatures.entrySet()) {
-            tempSchemaAndSignatures
-                    .computeIfAbsent(entry.getKey(), k->new ArrayList<>())
-                    .addAll(entry.getValue());
+        return provenanceEncodings;
+    }
+
+    @Override
+    public boolean updateWhyProvenanceEncodingVariable(String varName, SQLNode node) {
+        boolean leftBool = this.left.updateWhyProvenanceEncodingVariable(varName, node);
+        boolean rightBool = this.right.updateWhyProvenanceEncodingVariable(varName, node);
+        return leftBool || rightBool;
+    }
+
+    @Override
+    public void updateSchemaAndSignatures(Set<String> varSchemaAndSignatures){
+
+        Set<String> tempSchemaAndSignatures = new HashSet<>();
+
+        if(schemaAndSignatures != null) {
+            tempSchemaAndSignatures.addAll(schemaAndSignatures);
         }
+
+        tempSchemaAndSignatures.addAll(varSchemaAndSignatures);
 
         this.left.updateSchemaAndSignatures(tempSchemaAndSignatures);
         this.right.updateSchemaAndSignatures(tempSchemaAndSignatures);
-    }
-
-    @Override
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
-
-        Set<Set<String>> whyProv = new HashSet<>();
-        Set<Set<String>> leftWhyProv = this.left.calculateWhyProv(row);
-        Set<Set<String>> rightWhyProv = this.right.calculateWhyProv(row);
-
-        if (leftWhyProv.isEmpty() && !rightWhyProv.isEmpty()) {
-            whyProv.addAll(rightWhyProv);
-        }else if (!leftWhyProv.isEmpty() && rightWhyProv.isEmpty()) {
-            whyProv.addAll(leftWhyProv);
-        }else{
-            for (Set<String> set : leftWhyProv) {
-                for (Set<String> set2 : rightWhyProv) {
-                    Set<String> union = new HashSet<>(set);
-                    union.addAll(set2);
-                    whyProv.add(union);
-                }
-            }
-        }
-        return whyProv;
-    }
-
-    @Override
-    public String calculateHowProv(Map<String, Object> row) {
-
-        String leftProv = this.left.calculateHowProv(row);
-        String rightProv = this.right.calculateHowProv(row);
-
-        if (!leftProv.isEmpty() && !rightProv.isEmpty()) {
-            return "(" + leftProv + ") x (" + rightProv + ")";
-        } else if (!leftProv.isEmpty()) {
-            return leftProv;
-        } else if (!rightProv.isEmpty()) {
-            return rightProv;
-        }
-        return "";
     }
 }

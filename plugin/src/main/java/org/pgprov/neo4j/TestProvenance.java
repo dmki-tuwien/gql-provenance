@@ -47,7 +47,7 @@ public class TestProvenance {
         long start = System.nanoTime();
         List<Map<String,Object>> result = tx.execute(query, params).stream().toList();
         long end = System.nanoTime();
-        double durationMs = (end - start) / 1_000_000.0;
+        double durationMs = (end - start) / 1000000.0;
 
         return Stream.of(new Row(durationMs, result.size()));
     }

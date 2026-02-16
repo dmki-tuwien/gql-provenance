@@ -30,8 +30,11 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     private Globals.ProcessStage processStage;
     private int counter = 0;
     private int varCounter = 0;
-    private final Map<String, List<String>> schemasAndsignatures = new HashMap<>();
+    private final Set<String> schemasAndsignatures = new HashSet<>();
+    private final Set<String> labelsSignature = new HashSet<>();
     private final Set<String> varsInMatchClause = new HashSet<>();
+    private boolean enterNextStatement = false;
+    private GQLParser.PathFactorContext repetitivePathFactorContext = null;
 
     // AST Build related
     private final ParseTreeProperty<SQLNode> sqlNodes = new ParseTreeProperty<>();
@@ -96,6 +99,16 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     }
 
     @Override
+    public void enterNextStatement(GQLParser.NextStatementContext ctx) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+            if (ctx.yieldClause() != null) {
+                throw new RuntimeException("YIELD clause is not supported.");
+            }
+            enterNextStatement = true;
+        }
+    }
+
+    @Override
     public void exitNextStatement(GQLParser.NextStatementContext ctx) {
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
             if (ctx.yieldClause() != null) {
@@ -109,18 +122,6 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     public void exitCompositeQueryStatement(GQLParser.CompositeQueryStatementContext ctx) {
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.compositeQueryExpression()));
-        }
-    }
-
-    @Override
-    public void enterCompositeQueryExpression(GQLParser.CompositeQueryExpressionContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.REWRITE) && ctx.queryConjunction() != null && ctx.queryConjunction().setOperator() != null) {
-            SQLNode sqlNode = sqlNodes.get(ctx);
-            Set<String> returnVars = sqlNode.getReturnVarsForRewriting();
-            SQLNode left = sqlNodes.get(ctx.compositeQueryExpression());
-            left.setReturnVarsForRewriting(returnVars);
-            SQLNode right = sqlNodes.get(ctx.compositeQueryPrimary());
-            right.setReturnVarsForRewriting(returnVars);
         }
     }
 
@@ -168,7 +169,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
                     SQLNode from = ctx.simpleLinearQueryStatement() != null ? sqlNodes.get(ctx.simpleLinearQueryStatement()) : initialRelation == null ? new SQLEmptyNode() : initialRelation;
 
-                    sqlNodes.put(ctx, new SQLProjectNode(varNames, from, new HashMap<>(schemasAndsignatures), null, false));
+                    sqlNodes.put(ctx, new SQLProjectNode(varNames, from, new HashSet<>(schemasAndsignatures)));
                     schemasAndsignatures.clear();
                 } else {
 
@@ -186,7 +187,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
                     SQLNode from = ctx.simpleLinearQueryStatement() != null ? sqlNodes.get(ctx.simpleLinearQueryStatement()) : initialRelation == null ? new SQLEmptyNode() : initialRelation;
 
-                    SQLNode projectNode = new SQLProjectNode(varNames, from, new HashMap<>(schemasAndsignatures), null, false);
+                    SQLNode projectNode = new SQLProjectNode(varNames, from, new HashSet<>(schemasAndsignatures));
                     schemasAndsignatures.clear();
 
                     if (renaming) {
@@ -205,50 +206,348 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 throw new RuntimeException("Only primitive result statements with simple linear queries and nested query specifications are supported.");
             }
 
-        } else if (processStage.equals(Globals.ProcessStage.REWRITE)) {
+        }
+        else if (processStage.equals(Globals.ProcessStage.REWRITE_WHY_PROVENANCE)) {
             if (ctx.primitiveResultStatement() != null) {
 
                 SQLNode sqlNode = sqlNodes.get(ctx);
-                Set<String> returnVars = sqlNode.getReturnVarsForRewriting();
-                Set<String> externalReturnVars = sqlNode.getExternalVarsForRewriting();
 
-                if(externalReturnVars == null){ externalReturnVars = new HashSet<>(); }
-                externalReturnVars.addAll(returnVars);
+                Set<String> provenanceEncodings = null;
+
+                if(sqlNode instanceof SQLRenameNode node){
+                    provenanceEncodings = new HashSet<>(node.getWhyProvenanceEncodings());
+                }else if(sqlNode instanceof SQLProjectNode node){
+                    provenanceEncodings = new HashSet<>(node.getWhyProvenanceEncodings());
+                }
 
                 GQLParser.ReturnStatementContext returnStatementCtx = ctx.primitiveResultStatement().returnStatement();
 
-                // add all necessary bindings to return
-                for (String varName : externalReturnVars) {
+                if(provenanceEncodings != null){
+                    for (String entry : provenanceEncodings) {
 
-                    if (varName.startsWith(Globals.TEMP_PATH_PREFIX)) {
+                        if (entry.startsWith(Globals.TEMP_PATH_PREFIX)) {
 
-                        String origVarName = varName.substring(Globals.TEMP_PATH_PREFIX.length());
+                            String origVarName = entry.substring(Globals.TEMP_PATH_PREFIX.length());
 
-                        if (!externalReturnVars.contains(Globals.PATH_PREFIX + origVarName)) {
+                            if(origVarName.startsWith(Globals.PATH_PREFIX)){
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(r)] AS "+ origVarName);
+                            }else{
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(r)] AS "+ Globals.PATH_PREFIX + origVarName);
+                            }
+                            getSQLAST().updateWhyProvenanceEncodingVariable(entry, sqlNode);
+                         }else if (entry.startsWith(Globals.TEMP_VAR_LIST_PREFIX)) {
 
-                            String newVarName = returnVars.contains(varName) ? origVarName : "\"" + Globals.EXTERNAL_VAR_VALUE + "\"";
-                            this.rewriter.insertAfter(returnStatementCtx.getStop(), ", " + newVarName + " AS " + Globals.PATH_PREFIX + origVarName);
+                            String origVarName = entry.substring(Globals.TEMP_VAR_LIST_PREFIX.length());
+                            if(origVarName.contains(Globals.PROP_ANNOT_KEY_PREFIX)){
+                                String[] varNameParts = origVarName.split(Globals.PROP_ANNOT_KEY_PREFIX);
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN "+varNameParts[0]+" | CASE WHEN x."+varNameParts[1]+" IS NULL THEN \""+Globals.EXTERNAL_VAR_VALUE+"\" ELSE "
+                                        +Globals.ID_FUNCTION+"(x)+\"." + varNameParts[1] + "\" END] AS " + Globals.VAR_PREFIX + origVarName);
+                            }else if(origVarName.contains(Globals.LBL_ANNOT_KEY_PREFIX)){
+                                String mainName = origVarName.substring(+Globals.NODE_ANNOT_PREFIX.length());
+                                String[] varNameParts = mainName.split(Globals.LBL_ANNOT_KEY_PREFIX);
+
+                                if(origVarName.startsWith(Globals.NODE_ANNOT_PREFIX)) {
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN " + varNameParts[0] + " | CASE WHEN \"" + varNameParts[1] + "\" IN labels(x) THEN "
+                                            + Globals.ID_FUNCTION + "(x)+\":" + varNameParts[1] + "\" ELSE \"" + Globals.EXTERNAL_VAR_VALUE + "\" END] AS " + Globals.VAR_PREFIX + mainName);
+                                }else{
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN " + varNameParts[0] + " | CASE WHEN \"" + varNameParts[1] + "\"=type(x) THEN "
+                                            + Globals.ID_FUNCTION + "(x)+\":" + varNameParts[1] + "\" ELSE \"" + Globals.EXTERNAL_VAR_VALUE + "\" END] AS " + Globals.VAR_PREFIX + mainName);
+                                }
+                            }else{
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN "+origVarName+" | "+Globals.ID_FUNCTION+"(x)] AS "+  Globals.VAR_PREFIX + origVarName);
+                            }
+                            getSQLAST().updateWhyProvenanceEncodingVariable(entry, sqlNode);
+
                         }
-                        sqlNode.updateVarInSchemaAndSignatures(varName);
+                        else if (entry.startsWith(Globals.TEMP_VAR_PREFIX)) {
 
-                    } else if (varName.startsWith(Globals.TEMP_VAR_PREFIX)) {
+                            String origVarName = entry.substring(Globals.TEMP_VAR_PREFIX.length());
+                            if(origVarName.contains(Globals.PROP_ANNOT_KEY_PREFIX)){
+                                String[] varNameParts = origVarName.split(Globals.PROP_ANNOT_KEY_PREFIX);
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", CASE WHEN "+varNameParts[0]+"."+varNameParts[1] +" IS NULL THEN \""
+                                        + Globals.EXTERNAL_VAR_VALUE + "\" ELSE "
+                                        +Globals.ID_FUNCTION+"(" + varNameParts[0] + ")+\"." + varNameParts[1] + "\" END AS " + Globals.VAR_PREFIX + origVarName);
 
-                        String origVarName = varName.substring(Globals.TEMP_VAR_PREFIX.length());
+                            }else if(origVarName.contains(Globals.LBL_ANNOT_KEY_PREFIX)){
+                                String mainName = origVarName.substring(+Globals.NODE_ANNOT_PREFIX.length());
+                                String[] varNameParts = mainName.split(Globals.LBL_ANNOT_KEY_PREFIX);
+                                if(origVarName.startsWith(Globals.NODE_ANNOT_PREFIX)) {
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", CASE WHEN \"" + varNameParts[1] + "\" IN labels(" + varNameParts[0] + ") THEN " + Globals.ID_FUNCTION + "(" + varNameParts[0] + ")+\":" + varNameParts[1] + "\" ELSE \""
+                                            + Globals.EXTERNAL_VAR_VALUE + "\" END AS " + Globals.VAR_PREFIX + mainName);
+                                }else{
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", CASE WHEN \"" + varNameParts[1] + "\"=type(" + varNameParts[0] + ") THEN " + Globals.ID_FUNCTION + "(" + varNameParts[0] + ")+\":" + varNameParts[1] + "\" ELSE \""
+                                            + Globals.EXTERNAL_VAR_VALUE + "\" END AS " + Globals.VAR_PREFIX + mainName);
+                                }
+                            }else{
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", "+Globals.ID_FUNCTION+"(" + origVarName +") AS "+  Globals.VAR_PREFIX + origVarName);
+                            }
+                            getSQLAST().updateWhyProvenanceEncodingVariable(entry, sqlNode);
 
-                        if (!externalReturnVars.contains(Globals.VAR_PREFIX + origVarName)) {
+                        }else{
 
-                            String newVarName = returnVars.contains(varName) ? origVarName : "\"" + Globals.EXTERNAL_VAR_VALUE + "\"";
-                            this.rewriter.insertAfter(returnStatementCtx.getStop(), ", " + newVarName + " AS " + Globals.VAR_PREFIX + origVarName);
+                            if (entry.startsWith(Globals.PATH_PREFIX)) {
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", "+ entry);
+                            }
+                            else {
+                                if(entry.contains(Globals.NODE_ANNOT_PREFIX) ){
+                                    String[] varNameParts = entry.split(Globals.NODE_ANNOT_PREFIX);
+                                    entry = varNameParts[0]+varNameParts[1];
+                                }else if(entry.contains(Globals.EDGE_ANNOT_PREFIX) ){
+                                    String[] varNameParts = entry.split(Globals.EDGE_ANNOT_PREFIX);
+                                    entry = varNameParts[0]+varNameParts[1];
+                                }
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", "+  entry);
+                            }
                         }
-                        sqlNode.updateVarInSchemaAndSignatures(varName);
+                    }
+                }
 
-                    } else {
+                Set<String> externalProvenanceEncodings = null;
 
-                        String newVarName = returnVars.contains(varName) ? "" : "\"" + Globals.EXTERNAL_VAR_VALUE + "\" AS ";
-                        this.rewriter.insertAfter(returnStatementCtx.getStop(), ", " + newVarName + varName);
+                if(sqlNode instanceof SQLRenameNode node){
+                    externalProvenanceEncodings = new HashSet<>(node.getExternalProvenanceEncodings());
+                }else if(sqlNode instanceof SQLProjectNode node){
+                    externalProvenanceEncodings = new HashSet<>(node.getExternalProvenanceEncodings());
+                }
+
+                if(externalProvenanceEncodings != null) {
+                    for (String entry : externalProvenanceEncodings) {
+
+                        if (entry.startsWith(Globals.TEMP_PATH_PREFIX) && (!provenanceEncodings.contains(entry))) {
+
+                            String origVarName = entry.substring(Globals.TEMP_PATH_PREFIX.length());
+
+                            if(!provenanceEncodings.contains(origVarName)){
+                                if(origVarName.startsWith(Globals.PATH_PREFIX)) {
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + origVarName);
+                                }else{
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + Globals.PATH_PREFIX +origVarName);
+                                }
+                            }
+                        }else if (entry.startsWith(Globals.TEMP_VAR_LIST_PREFIX)) {
+
+                            String origVarName = entry.substring(Globals.TEMP_VAR_LIST_PREFIX.length());
+                            String mainName = origVarName;
+                            if(origVarName.contains(Globals.NODE_ANNOT_PREFIX) || origVarName.contains(Globals.EDGE_ANNOT_PREFIX) ){
+                                mainName = origVarName.substring(Globals.EDGE_ANNOT_PREFIX.length());
+                            }
+
+                            if((!provenanceEncodings.contains(entry)) && (!provenanceEncodings.contains( Globals.VAR_PREFIX + origVarName))) {
+                                if (origVarName.contains(Globals.PROP_ANNOT_KEY_PREFIX)|| origVarName.contains(Globals.LBL_ANNOT_KEY_PREFIX)) {
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + Globals.VAR_PREFIX + mainName);
+                                }
+                            }
+
+                        }
+                        else if (entry.startsWith(Globals.TEMP_VAR_PREFIX)) {
+
+                            String origVarName = entry.substring(Globals.TEMP_VAR_PREFIX.length());
+                            String mainName = origVarName;
+                            if(origVarName.contains(Globals.NODE_ANNOT_PREFIX) || origVarName.contains(Globals.EDGE_ANNOT_PREFIX) ){
+                                mainName = origVarName.substring(Globals.EDGE_ANNOT_PREFIX.length());
+                            }
+
+                            if((!provenanceEncodings.contains(entry)) && (!provenanceEncodings.contains( Globals.VAR_PREFIX + origVarName))) {
+                                if (origVarName.contains(Globals.PROP_ANNOT_KEY_PREFIX)|| origVarName.contains(Globals.LBL_ANNOT_KEY_PREFIX)) {
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + Globals.VAR_PREFIX + mainName);
+                                }
+                            }
+                        }else{
+
+                            if (entry.startsWith(Globals.PATH_PREFIX) && !provenanceEncodings.contains(entry)) {
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + entry);
+                            }else {
+                                String origVarName = entry.substring(Globals.VAR_PREFIX.length());
+                                String mainName = origVarName;
+                                if(origVarName.contains(Globals.NODE_ANNOT_PREFIX) || origVarName.contains(Globals.EDGE_ANNOT_PREFIX) ){
+                                    mainName = origVarName.substring(Globals.NODE_ANNOT_PREFIX.length());
+                                }
+
+                                if((!provenanceEncodings.contains(entry))) {
+                                    if (origVarName.contains(Globals.PROP_ANNOT_KEY_PREFIX)|| origVarName.contains(Globals.LBL_ANNOT_KEY_PREFIX)) {
+                                        this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + Globals.VAR_PREFIX + mainName);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
+        }else if(processStage.equals(Globals.ProcessStage.REWRITE_WHERE_PROVENANCE)){
+            if (ctx.primitiveResultStatement() != null) {
+
+                SQLNode sqlNode = sqlNodes.get(ctx);
+
+                Map<String, String> provenanceEncodings = null;
+
+                if(sqlNode instanceof SQLRenameNode node){
+                    provenanceEncodings = new HashMap<>(node.getWhereProvenanceEncodings());
+                }else if(sqlNode instanceof SQLProjectNode node){
+                    provenanceEncodings = new HashMap<>(node.getWhereProvenanceEncodings());
+                }
+
+                GQLParser.ReturnStatementContext returnStatementCtx = ctx.primitiveResultStatement().returnStatement();
+
+
+                if(provenanceEncodings != null){
+                    for (Map.Entry<String, String> entry : provenanceEncodings.entrySet()) {
+
+                        if (entry.getValue().startsWith(Globals.TEMP_PATH_PREFIX)) {
+
+                            String origVarName = entry.getValue().substring(Globals.TEMP_PATH_PREFIX.length());
+
+                            if(origVarName.startsWith(Globals.PATH_PREFIX)){
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(r)] AS "+ Globals.VAR_PREFIX + entry.getKey());
+                            }else{
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(r)] AS "+ Globals.VAR_PREFIX + entry.getKey());
+                            }
+                            getSQLAST().updateWhyProvenanceEncodingVariable(entry.getKey(), sqlNode);
+                        }else if (entry.getValue().startsWith(Globals.TEMP_VAR_LIST_PREFIX)) {
+
+                            String origVarName = entry.getValue().substring(Globals.TEMP_VAR_LIST_PREFIX.length());
+                            String name = origVarName;
+                            if(origVarName.contains(Globals.PROP_ANNOT_KEY_PREFIX)){
+                                String[] varNameParts = origVarName.split(Globals.PROP_ANNOT_KEY_PREFIX);
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN "+varNameParts[0]+" | CASE WHEN x."+varNameParts[1]+" IS NULL THEN \""+Globals.EXTERNAL_VAR_VALUE+"\" ELSE "
+                                        +Globals.ID_FUNCTION+"(x)+\"." + varNameParts[1] + "\" END] AS "  + Globals.VAR_PREFIX + origVarName);
+                            }else if(origVarName.contains(Globals.LBL_ANNOT_KEY_PREFIX)){
+                                String mainName = origVarName.substring(+Globals.NODE_ANNOT_PREFIX.length());
+                                String[] varNameParts = mainName.split(Globals.LBL_ANNOT_KEY_PREFIX);
+                                if(origVarName.startsWith(Globals.NODE_ANNOT_PREFIX)){
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN "+varNameParts[0]+" | CASE WHEN \""+varNameParts[1]+"\" IN labels(x)) THEN "
+                                            +Globals.ID_FUNCTION+"(x)+\":" + varNameParts[1] + "\" ELSE \""+Globals.EXTERNAL_VAR_VALUE+"\" END] AS "+  Globals.VAR_PREFIX + mainName);
+                                }else{
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN "+varNameParts[0]+" | CASE WHEN \""+varNameParts[1]+"\"=type(x) THEN "
+                                            +Globals.ID_FUNCTION+"(x)+\":" + varNameParts[1] + "\" ELSE \""+Globals.EXTERNAL_VAR_VALUE+"\" END] AS "+  Globals.VAR_PREFIX + mainName);
+                                }
+                                name = mainName;
+
+                            }else{
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN "+origVarName+" | "+Globals.ID_FUNCTION+"(x)] AS "+  Globals.VAR_PREFIX + origVarName);
+                            }
+
+                            getSQLAST().updateWhyProvenanceEncodingVariable(name, sqlNode);
+                        }
+                        else if (entry.getValue().startsWith(Globals.TEMP_VAR_PREFIX)) {
+
+                            String origVarName = entry.getValue().substring(Globals.TEMP_VAR_PREFIX.length());
+                            String name = origVarName;
+                            if(origVarName.contains(Globals.PROP_ANNOT_KEY_PREFIX)){
+                                String[] varNameParts = origVarName.split(Globals.PROP_ANNOT_KEY_PREFIX);
+                                String newName = entry.getKey();
+                                if(entry.getKey().contains(".")){
+                                    String[] propNameParts = entry.getKey().split("\\.");
+                                    newName = propNameParts[0]+"_"+propNameParts[1];
+                                }
+
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", CASE WHEN "+varNameParts[0]+"."+varNameParts[1] +" IS NULL THEN \""
+                                        + Globals.EXTERNAL_VAR_VALUE + "\" ELSE "
+                                        +Globals.ID_FUNCTION+"(" + varNameParts[0] + ")+\"." + varNameParts[1] + "\" END AS " + Globals.VAR_PREFIX + newName);
+                                name = newName;
+
+                            }else if(origVarName.contains(Globals.LBL_ANNOT_KEY_PREFIX)){
+                                String mainName = origVarName.substring(Globals.NODE_ANNOT_PREFIX.length());
+                                String[] varNameParts = mainName.split(Globals.LBL_ANNOT_KEY_PREFIX);
+                                String newName = entry.getKey();
+                                if(entry.getKey().contains(":")){
+                                    String[] propNameParts = entry.getKey().split(":");
+                                    newName = propNameParts[0]+"_"+propNameParts[1];
+                                }
+
+                                if(origVarName.startsWith(Globals.NODE_ANNOT_PREFIX)) {
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", CASE WHEN \"" + varNameParts[1] + "\" IN labels(" + varNameParts[0] + ") THEN " + Globals.ID_FUNCTION + "(" + varNameParts[0] + ")+\":" + varNameParts[1] + "\" ELSE \""
+                                            + Globals.EXTERNAL_VAR_VALUE + "\" END AS " + Globals.VAR_PREFIX + newName);
+                                }else{
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", CASE WHEN \"" + varNameParts[1] + "\"=type(" + varNameParts[0] + ") THEN " + Globals.ID_FUNCTION + "(" + varNameParts[0] + ")+\":" + varNameParts[1] + "\" ELSE \""
+                                            + Globals.EXTERNAL_VAR_VALUE + "\" END AS " + Globals.VAR_PREFIX + newName);
+                                }
+                                name= newName;
+                            }else{
+
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", "+Globals.ID_FUNCTION+"(" + origVarName +") AS "+  Globals.VAR_PREFIX + entry.getKey());
+                                name = entry.getKey();
+                            }
+
+                            getSQLAST().updateWhereProvenanceEncodingVariable(name, sqlNode);
+
+                        }else{
+
+                            if (entry.getValue().startsWith(Globals.PATH_PREFIX)) {
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", "+ entry);
+                            }else {
+
+                                String name = entry.getValue();
+                                if(name.contains(Globals.NODE_ANNOT_PREFIX) ){
+                                    String[] varNameParts = name.split(Globals.NODE_ANNOT_PREFIX);
+                                    name = varNameParts[0]+varNameParts[1];
+                                }else if(name.contains(Globals.EDGE_ANNOT_PREFIX) ){
+                                    String[] varNameParts = name.split(Globals.EDGE_ANNOT_PREFIX);
+                                    name = varNameParts[0]+varNameParts[1];
+                                }
+
+                                if(name.contains(Globals.PROP_ANNOT_KEY_PREFIX)) {
+                                    String[] varNames = name.split(Globals.PROP_ANNOT_KEY_PREFIX);
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", " + Globals.VAR_PREFIX + varNames[1]);
+                                }else if(name.contains(Globals.LBL_ANNOT_KEY_PREFIX)){
+                                    String[] varNames = name.split(Globals.LBL_ANNOT_KEY_PREFIX);
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", " + Globals.VAR_PREFIX + varNames[1]);
+                                }else{
+                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", " + name);
+                                }
+                            }
+                        }
+                    }
+                }
+
+//                Set<String> externalProvenanceEncodings = null;
+//
+//                if(sqlNode instanceof SQLRenameNode node){
+//                    externalProvenanceEncodings = new HashSet<>(node.getExternalProvenanceEncodings());
+//                }else if(sqlNode instanceof SQLProjectNode node){
+//                    externalProvenanceEncodings = new HashSet<>(node.getExternalProvenanceEncodings());
+//                }
+
+//                if(externalProvenanceEncodings != null) {
+//                    for (String entry : externalProvenanceEncodings) {
+//
+//                        if (entry.startsWith(Globals.TEMP_PATH_PREFIX) && (!provenanceEncodings.contains(entry))) {
+//
+//                            String origVarName = entry.substring(Globals.TEMP_PATH_PREFIX.length());
+//
+//                            if(!provenanceEncodings.contains(origVarName)){
+//                                if(origVarName.startsWith(Globals.PATH_PREFIX)) {
+//                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + origVarName);
+//                                }else{
+//                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + Globals.PATH_PREFIX +origVarName);
+//                                }
+//                            }
+//                        }
+//                        else if (entry.startsWith(Globals.TEMP_VAR_PREFIX)) {
+//
+//                            String origVarName = entry.substring(Globals.TEMP_VAR_PREFIX.length());
+//                            if((!provenanceEncodings.contains(entry)) && (!provenanceEncodings.contains( Globals.VAR_PREFIX + origVarName))) {
+//                                if (origVarName.contains(Globals.PROP_ANNOT_KEY_PREFIX)|| origVarName.contains(Globals.LBL_ANNOT_KEY_PREFIX)) {
+//                                    this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + Globals.VAR_PREFIX + origVarName);
+//                                }
+//                            }
+//                        }else{
+//
+//                            if (entry.startsWith(Globals.PATH_PREFIX) && !provenanceEncodings.contains(entry)) {
+//                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + entry);
+//                            }else {
+//                                String origVarName = entry.substring(Globals.VAR_PREFIX.length());
+//
+//                                if((!provenanceEncodings.contains(entry))) {
+//                                    if (origVarName.contains(Globals.PROP_ANNOT_KEY_PREFIX)|| origVarName.contains(Globals.LBL_ANNOT_KEY_PREFIX)) {
+//                                        this.rewriter.insertAfter(returnStatementCtx.getStop(), ", \"" + Globals.EXTERNAL_VAR_VALUE + "\" AS " + Globals.VAR_PREFIX + origVarName);
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+            }
+
         }
     }
 
@@ -303,7 +602,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 if (preStatementContext == null) {
                     sqlNodes.put(statement, sqlNodes.get(statement.callQueryStatement()));
                 } else {
-                    sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(statement.callQueryStatement()), null));
+                    sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(statement.callQueryStatement()), null, false));
                 }
 
                 preStatementContext = statement;
@@ -315,7 +614,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                     if (preStatementContext == null) {
                         sqlNodes.put(statement, sqlNodes.get(primitiveQueryStatement.matchStatement()));
                     } else {
-                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.matchStatement()), new HashMap<>(schemasAndsignatures)));
+                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.matchStatement()), new HashSet<>(schemasAndsignatures), false));
                         schemasAndsignatures.clear();
                     }
                     preStatementContext = statement;
@@ -336,7 +635,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                     if (preStatementContext == null) {
                         sqlNodes.put(statement, sqlNodes.get(primitiveQueryStatement.letStatement()));
                     } else {
-                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.letStatement()), null));
+                        sqlNodes.put(statement, new SQLJoin(sqlNodes.get(preStatementContext), sqlNodes.get(primitiveQueryStatement.letStatement()), null, false));
                     }
                     preStatementContext = statement;
                 } else if(primitiveQueryStatement.orderByAndPageStatement() == null) {
@@ -354,7 +653,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void exitFilterStatement(GQLParser.FilterStatementContext ctx) {
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
-            sqlNodes.put(ctx, new SQLSelectCriteriaNode(ctx.searchCondition().getText(), new HashMap<>(schemasAndsignatures)));
+            sqlNodes.put(ctx, new SQLSelectCriteriaNode(ctx.searchCondition().getText(), new HashSet<>(schemasAndsignatures), new HashSet<>(labelsSignature)));
             schemasAndsignatures.clear();
         }
     }
@@ -362,7 +661,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void exitLetStatement(GQLParser.LetStatementContext ctx) {
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
-            sqlNodes.put(ctx, new SQLRelationNode(ctx.getText(), new HashSet<>(varsInMatchClause), new HashMap<>(schemasAndsignatures)));
+            sqlNodes.put(ctx, new SQLRelationNode(ctx.getText(), new HashSet<>(varsInMatchClause), new HashSet<>(schemasAndsignatures), null));
             varsInMatchClause.clear();
             schemasAndsignatures.clear();
         }
@@ -386,9 +685,14 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
 
             if (initialRelation != null) {
-                sqlNodes.put(ctx, new SQLJoin(initialRelation, sqlNodes.get(ctx.graphPatternBindingTable()), new HashMap<>(schemasAndsignatures)));
+                boolean subQueryInnerJoin = true;
+                if(initialRelation instanceof SQLEmptyNode || enterNextStatement) {
+                    subQueryInnerJoin = false;
+                    enterNextStatement = false;
+                }
+                sqlNodes.put(ctx, new SQLJoin(initialRelation, sqlNodes.get(ctx.graphPatternBindingTable()), new HashSet<>(schemasAndsignatures), subQueryInnerJoin));
             } else {
-                sqlNodes.put(ctx, new SQLJoin(new SQLEmptyNode(), sqlNodes.get(ctx.graphPatternBindingTable()), new HashMap<>(schemasAndsignatures)));
+                sqlNodes.put(ctx, sqlNodes.get(ctx.graphPatternBindingTable()));
             }
             schemasAndsignatures.clear();
         }
@@ -412,12 +716,23 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
             List<GQLParser.PathPatternContext> pathPatternContexts = ctx.pathPatternList().pathPattern();
             SQLNode from = null;
+            int i=0;
             for (GQLParser.PathPatternContext pathPatternContext : pathPatternContexts) {
-
+                i+=1;
                 if (from == null) {
-                    from = sqlNodes.get(pathPatternContext);
+                    Set<String> schema = null;
+                    if(i==pathPatternContexts.size()) {
+                        schema = new HashSet<>(schemasAndsignatures);
+                        schemasAndsignatures.clear();
+                    }
+                    from = new SQLJoin(new SQLEmptyNode(), sqlNodes.get(pathPatternContext), schema, false);
                 } else {
-                    from = new SQLJoin(from, sqlNodes.get(pathPatternContext), null);
+                    Set<String> schema = null;
+                    if(i==pathPatternContexts.size()) {
+                        schema = new HashSet<>(schemasAndsignatures);
+                        schemasAndsignatures.clear();
+                    }
+                    from = new SQLJoin(from, sqlNodes.get(pathPatternContext), schema, false);
                 }
             }
             sqlNodes.put(ctx, from);
@@ -462,7 +777,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 initialRelation = new SQLProjectNode(Arrays.stream(
                                 varScopeCtx.bindingVariableReferenceList().getText().split(",")
                         )
-                        .collect(Collectors.toSet()), sqlNodes.get(subqueryScopes.get(ctx)), null, null, true);
+                        .collect(Collectors.toSet()), sqlNodes.get(subqueryScopes.get(ctx)), null);
             }
         }
     }
@@ -500,7 +815,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
         if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) { //changed
             GQLParser.ElementPatternFillerContext patternFiller = ctx.elementPatternFiller();
-            processPatternFiller(patternFiller);
+            processPatternFiller(patternFiller, Globals.NODE_ANNOT_PREFIX);
         }
     }
 
@@ -525,7 +840,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 } else {
                     patternFiller = ctx.fullEdgePattern().fullEdgeAnyDirection().elementPatternFiller();
                 }
-                processPatternFiller(patternFiller);
+                processPatternFiller(patternFiller, Globals.EDGE_ANNOT_PREFIX);
 
             }
         }
@@ -539,20 +854,35 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
             if (ctx.pathVariableDeclaration() == null) {
                 String newVar = Globals.PATH_PREFIX + counter++;
                 this.rewriter.insertBefore(ctx.getStart(), newVar + " = ");
+                String tempVar = Globals.TEMP_PATH_PREFIX + newVar;
 
-                schemasAndsignatures.put(newVar, new ArrayList<>());
-                sqlNodes.put(ctx, new SQLRelationNode(newVar, new HashSet<>(varsInMatchClause), new HashMap<>(schemasAndsignatures)));
+                schemasAndsignatures.add(tempVar);
+                labelsSignature.add(tempVar);
+                sqlNodes.put(ctx, new SQLRelationNode(newVar, new HashSet<>(varsInMatchClause), new HashSet<>(schemasAndsignatures), new HashSet<>(labelsSignature)));
             } else {
                 String varName = ctx.pathVariableDeclaration().pathVariable().getText();
 
-                schemasAndsignatures.put(Globals.TEMP_PATH_PREFIX + varName, new ArrayList<>());
-                sqlNodes.put(ctx, new SQLRelationNode(Globals.PATH_PREFIX + varName, new HashSet<>(varsInMatchClause), new HashMap<>(schemasAndsignatures)));
+                schemasAndsignatures.add(Globals.TEMP_PATH_PREFIX + varName);
+                labelsSignature.add(Globals.TEMP_PATH_PREFIX + varName);
+                sqlNodes.put(ctx, new SQLRelationNode(Globals.PATH_PREFIX + varName, new HashSet<>(varsInMatchClause), new HashSet<>(schemasAndsignatures), new HashSet<>(labelsSignature)));
             }
 
             varsInMatchClause.clear();
             schemasAndsignatures.clear();
-
+            labelsSignature.clear();
         }
+    }
+
+    @Override
+    public void enterPfQuantifiedPathPrimary(GQLParser.PfQuantifiedPathPrimaryContext ctx) {
+
+        if(repetitivePathFactorContext==null) repetitivePathFactorContext = ctx;
+    }
+
+    @Override
+    public void exitPfQuantifiedPathPrimary(GQLParser.PfQuantifiedPathPrimaryContext ctx) {
+
+        if(repetitivePathFactorContext==ctx) repetitivePathFactorContext = null;
     }
 
     @Override
@@ -563,13 +893,13 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
             if (ctx.propertyName() != null && ctx.valueExpressionPrimary() != null && ctx.valueExpressionPrimary().bindingVariableReference() != null) {
 
                 String varName = Globals.TEMP_VAR_PREFIX + ctx.valueExpressionPrimary().bindingVariableReference().getText();
-                schemasAndsignatures.computeIfAbsent(varName, k -> new ArrayList<>()).add(Globals.PROP_ANNOT_KEY_PREFIX + ctx.propertyName().getText());
+                schemasAndsignatures.add(varName+Globals.PROP_ANNOT_KEY_PREFIX + ctx.propertyName().getText());
             }
         }
 
     }
 
-    private void processPatternFiller(GQLParser.ElementPatternFillerContext patternFiller) {
+    private void processPatternFiller(GQLParser.ElementPatternFillerContext patternFiller, String patternType) {
 
         GQLParser.IsLabelExpressionContext labelsCtx = patternFiller.isLabelExpression();
         GQLParser.ElementPatternPredicateContext predicate = patternFiller.elementPatternPredicate();
@@ -577,27 +907,27 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
         if (labelsCtx != null || predicate != null) {
 
             String varName;
+            String prefix = repetitivePathFactorContext != null? Globals.TEMP_VAR_LIST_PREFIX: Globals.TEMP_VAR_PREFIX;
             if (patternFiller.elementVariableDeclaration() != null) {
                 varName = patternFiller.elementVariableDeclaration().elementVariable().getText();
                 varsInMatchClause.add(varName);
-                varName = Globals.TEMP_VAR_PREFIX + varName;
+
             } else {
                 // add missing variables to pattern
-                varName = Globals.VAR_PREFIX + Globals.ANONYMOUS_VAR_PREFIX + varCounter++;
+                varName = Globals.ANONYMOUS_VAR_PREFIX + varCounter++;
                 this.rewriter.insertBefore(patternFiller.getStart(), varName);
             }
-
-            List<String> attr = schemasAndsignatures.getOrDefault(varName, new ArrayList<>());
+            schemasAndsignatures.add(prefix + varName);
 
             // add labels to variable schema
             if (labelsCtx != null) {
-
-
                 List<String> nodeLabels = getLabelName(labelsCtx.labelExpression());
                 for (String lbl : nodeLabels) {
-                    attr.add(Globals.LBL_ANNOT_KEY_PREFIX + lbl);
+                    labelsSignature.add(prefix+  patternType+ varName+Globals.LBL_ANNOT_KEY_PREFIX + lbl);
                 }
             }
+
+            varName = prefix + varName;
 
             // add properties to variable schema from property specification
             if (predicate != null) {
@@ -605,15 +935,16 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                     List<GQLParser.PropertyKeyValuePairContext> propertyKeyValuePairs = predicate.elementPropertySpecification().propertyKeyValuePairList().propertyKeyValuePair();
 
                     for (GQLParser.PropertyKeyValuePairContext keyValuePair : propertyKeyValuePairs) {
-                        attr.add(Globals.PROP_ANNOT_KEY_PREFIX + keyValuePair.propertyName().getText());
+                        schemasAndsignatures.add(varName+Globals.PROP_ANNOT_KEY_PREFIX + keyValuePair.propertyName().getText());
                     }
                 }
 
             }
-            schemasAndsignatures.put(varName, attr);
         } else if (patternFiller.elementVariableDeclaration() != null) {
             String varName = patternFiller.elementVariableDeclaration().elementVariable().getText();
+            String prefix = repetitivePathFactorContext != null? Globals.TEMP_VAR_LIST_PREFIX : Globals.TEMP_VAR_PREFIX ;
             varsInMatchClause.add(varName);
+            schemasAndsignatures.add( prefix + varName);
         }
     }
 
@@ -643,6 +974,8 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public String getRewrittenQuery() {
+
+        System.out.println(this.rewriter.getText());
         return this.rewriter.getText();
     }
 }

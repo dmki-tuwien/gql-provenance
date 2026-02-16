@@ -39,16 +39,20 @@ public record Helper(){
                 }
                 tempRow.put(key, new org.pgprov.graph.model.Path(pathElements));
             }else if(value instanceof List<?> list){
-                List<org.pgprov.graph.model.Entity> repeatedVals = new ArrayList<>();
+                List<String> repeatedVals = new ArrayList<>();
 
                 for(Object entity: list){
-                    if(entity instanceof Node){
-                        repeatedVals.add(nodeTransformer.transform((Node) entity));
-                    }else if(entity instanceof Relationship){
-                        repeatedVals.add(edgeTransformer.transform((Relationship) entity));
+                    if(entity instanceof String){
+                        repeatedVals.add((String) entity);
+                    }else if(entity instanceof Long ent){
+                        repeatedVals.add(Long.toString(ent));
+                    }else if(entity instanceof Integer ent){
+                        repeatedVals.add(Integer.toString(ent));
                     }
                 }
                 tempRow.put(key, repeatedVals);
+            }else if(value != null){
+                    tempRow.put(key, value.toString());
             }
         }
 

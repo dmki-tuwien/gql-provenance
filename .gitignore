@@ -4,7 +4,10 @@
 
 pgprov-core/src/main/java/org/pgprov/parser/*
 */target/*
+experiments/driver/target/*
 
 *.jar
+*.csv
+*.png
 
 data/ldbc_finbench/datagen/*

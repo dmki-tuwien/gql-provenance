@@ -38,8 +38,15 @@ sleep 15
 
 docker compose exec --user root neo4j sh -c "/scripts/fix_access_rights.sh"
 
-#echo "Waiting for Neo4j to be ready..."
-#sleep 15
-#
-#docker compose down
+docker compose stop neo4j
+
+#docker compose run --rm neo4j \
+#  neo4j-admin database dump \
+#    --to=/import/${DATASET}_${SCALE_FACTOR}.dump \
+#    neo4j
+
+echo "Waiting for Neo4j to be ready..."
+sleep 15
+
+docker compose down
 

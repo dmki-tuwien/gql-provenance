@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.neo4j.driver.*;
 import org.neo4j.harness.Neo4j;
 import org.neo4j.harness.Neo4jBuilders;
+import org.pgprov.Globals;
 
 import java.io.IOException;
 
@@ -120,11 +121,12 @@ public class GetWhyProvenanceTest {
     public void runTest( ) throws IOException {
         try (Session session = driver.session()) {
 
-            String query = "MATCH (src:ACCOUNT)-[edge1:TRANSFER|WITHDRAW]->(mid:ACCOUNT {id: '236720455413667935'})-[edge2:TRANSFER|WITHDRAW]->(dst:ACCOUNT)\n" +
-                    "WHERE 0 < edge1.createTime < 999999999999 AND edge1.amount > 0\n" +
-                    "AND 0 < edge2.createTime < 999999999999 AND edge2.amount > 0\n" +
-                    "RETURN src AS Src, dst AS Dst, edge1.amount AS edge1Amount, edge2.amount AS edge2Amount";
-            Result record = session.run("CALL org.pgprov.getWhyProvenance(\"" + query + "\" , {})");
+            String query = "MATCH (person:PERSON {id: $ID})-[edge1:OWN]->(accounts:ACCOUNT), p=(accounts)<-[edge2:TRANSFER]-{1,3}(other:ACCOUNT)," +
+                    "(other)<-[edge3:DEPOSIT]-(loan:LOAN) " +
+                    "WHERE 1633046400000 < edge3.createTime < 1680307200000 " +
+                    "RETURN other.id AS otherId, loan.loanAmount AS sumLoanAmount, loan.balance AS sumLoanBalance " +
+                    "ORDER BY sumLoanAmount DESC";
+            Result record = session.run("CALL org.pgprov.getWhyProvenance(\"" + query + "\" , { ID : \"21990232556512\"})");
         }
     }
 }

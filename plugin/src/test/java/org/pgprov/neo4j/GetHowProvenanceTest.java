@@ -17,14 +17,15 @@ public class GetHowProvenanceTest {
 
     private Driver driver;
     private Neo4j embeddedDatabaseServer;
-    private final String provModel = "How";
+    private final String provModel = "Where";
 
     @BeforeAll
     void initializeNeo4j() {
 
         embeddedDatabaseServer = Neo4jBuilders.newInProcessBuilder()
                 .withDisabledServer()
-                .withProcedure(GetHowProvenance.class)
+                .withProcedure(TestProvenance.class)
+                .withProcedure(GetWhereProvenance.class)
                 .withFixture(
                         "MERGE (p1:Person:Leader {name: 'Alice', age: 30, __n: 'n1001', __k_name: 'k2001', __k_age: 'k3001', __l_Person: 'l4001'})\n"
                                 + "MERGE (p2:Person {name: 'Bob', age: 28, __n: 'n1002', __k_name: 'k2002', __k_age: 'k3002', __l_Person: 'l4002'})\n"

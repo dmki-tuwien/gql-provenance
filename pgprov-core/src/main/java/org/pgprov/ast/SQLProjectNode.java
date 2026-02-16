@@ -1,8 +1,6 @@
 package org.pgprov.ast;
 
 import org.pgprov.Globals;
-import org.pgprov.graph.model.Entity;
-import org.pgprov.graph.model.Path;
 
 import java.util.*;
 
@@ -10,17 +8,32 @@ public class SQLProjectNode extends SQLNode {
 
     private final Set<String> columns;
     private final SQLNode fromNode;
-    private Map<String, List<String>> schemaAndSignatures;
-    private Set<String> newVars;
-    private final boolean passToSubquery;
+    private final Set<String> schemaAndSignatures;
+    private final Set<String> whyProvenanceEncodings = new HashSet<>();
+    private final Map<String, String> whereProvenanceEncodings = new HashMap<>();
 
-    public SQLProjectNode(Set<String> columns, SQLNode fromNode, Map<String, List<String>> schemaAndSignatures, Set<String> newVars, boolean passToSubquery) {
+
+    private final Set<String> externalProvenanceEncodings = new HashSet<>();
+
+    public Set<String> getWhyProvenanceEncodings() {
+
+        return whyProvenanceEncodings;
+    }
+
+    public Map<String, String> getWhereProvenanceEncodings() {
+
+        return whereProvenanceEncodings;
+    }
+
+    public Set<String> getExternalProvenanceEncodings() {
+        return externalProvenanceEncodings;
+    }
+
+    public SQLProjectNode(Set<String> columns, SQLNode fromNode, Set<String> schemaAndSignatures) {
 
         this.columns = columns;
         this.fromNode = fromNode;
         this.schemaAndSignatures = schemaAndSignatures;
-        this.newVars = newVars;
-        this.passToSubquery = passToSubquery;
     }
 
     @Override
@@ -30,111 +43,142 @@ public class SQLProjectNode extends SQLNode {
                 + "fromNode=" + fromNode.toString(indent + 2) + "]";
     }
 
-
     @Override
-    public Set<String> getOriginalReturnVars() {
-        return columns;
-    }
+    public Map<String, String> storeWhereProvenanceEncodings(Globals.ProvenanceType provenanceModel, Map<String,String> returnColumns, Map<String,String> renames){
 
-    @Override
-    public Set<String> getReturnVarsForRewriting() {
+        boolean finalReturn = returnColumns==null || returnColumns.isEmpty();
+        Set<String> outputValues = new HashSet<>();
+        if(finalReturn){
 
-        Set<String> returnVars = new HashSet<>();
-        if (!passToSubquery) {
-            returnVars.addAll(fromNode.getReturnVarsForRewriting());
-            if(schemaAndSignatures!=null) returnVars.addAll(schemaAndSignatures.keySet());
+            if(returnColumns==null){
+                returnColumns = new HashMap<>();
+            }
+
+            for(String key: columns){
+                returnColumns.put(key,key);
+            }
+
+            if(renames!=null){
+
+                for(Map.Entry<String, String> entry: renames.entrySet()){
+                    if(returnColumns.containsKey(entry.getKey())){
+                        String value = entry.getValue();
+                        String key = returnColumns.remove(entry.getKey());
+                        returnColumns.put(value, key);
+                    }
+                }
+                renames.clear();
+            }
+        }else{
+            for(Map.Entry<String, String> entry: returnColumns.entrySet()){
+                if( !entry.getKey().equals(entry.getValue()) && columns.contains(entry.getValue()) && entry.getValue().contains(".")){
+                   outputValues.add(entry.getKey());
+                }
+            }
         }
-        return returnVars;
-    }
 
-    @Override
-    public void setReturnVarsForRewriting(Set<String> returnVars) {
+        Map<String, String> fromProvenanceEncodings = this.fromNode.storeWhereProvenanceEncodings(provenanceModel, returnColumns, renames);
 
-        for (String returnVar : returnVars) {
-            if ( schemaAndSignatures!= null && schemaAndSignatures.containsKey(returnVar)) continue;
-            if(this.newVars == null) this.newVars = new HashSet<>();
-            newVars.add(returnVar);
+        if(finalReturn){
+            this.whereProvenanceEncodings.putAll(fromProvenanceEncodings);
+        }else if(!outputValues.isEmpty()){
+            for(String key: outputValues){
+                this.whereProvenanceEncodings.put(key, fromProvenanceEncodings.get(key));
+            }
         }
+        return fromProvenanceEncodings;
+
     }
 
     @Override
-    public Set<String> getExternalVarsForRewriting() {
-        return newVars;
+    public Set<String> storeWhyProvenanceEncodings(Globals.ProvenanceType provenanceModel) {
+
+            // get provenance encodings and forwards
+            Set<String> fromProvenanceEncodings = this.fromNode.storeWhyProvenanceEncodings(provenanceModel);
+
+            Set<String> provenanceEncodings = new HashSet<>(fromProvenanceEncodings);
+
+            if(schemaAndSignatures != null) {
+                provenanceEncodings.addAll(schemaAndSignatures);
+            }
+            provenanceEncodings.removeIf(key -> (key.startsWith(Globals.TEMP_VAR_PREFIX) || key.startsWith(Globals.TEMP_VAR_LIST_PREFIX)) && !(key.contains(Globals.PROP_ANNOT_KEY_PREFIX) || key.contains(Globals.LBL_ANNOT_KEY_PREFIX)));
+            this.whyProvenanceEncodings.addAll(provenanceEncodings);
+            return provenanceEncodings;
     }
 
     @Override
-    public void updateVarInSchemaAndSignatures(String varName) {
+    public boolean updateWhereProvenanceEncodingVariable(String varName, SQLNode node) {
 
-        if (schemaAndSignatures!= null && schemaAndSignatures.containsKey(varName)) {
-            List<String> entry = schemaAndSignatures.remove(varName);
+        boolean bool = this.fromNode.updateWhereProvenanceEncodingVariable(varName,  node);
+        if(node.equals(this) || bool) {
+            String removed = this.whereProvenanceEncodings.remove(varName);
+
+            if(removed==null) {
+                return true;
+            }
+
+            String newVar = removed;
+            if (removed.startsWith(Globals.TEMP_VAR_LIST_PREFIX)) {
+                newVar = Globals.VAR_PREFIX + removed.substring(Globals.TEMP_VAR_LIST_PREFIX.length());
+            } else if (removed.startsWith(Globals.TEMP_VAR_PREFIX)) {
+                newVar = Globals.VAR_PREFIX + removed.substring(Globals.TEMP_VAR_PREFIX.length());
+            } else if (removed.startsWith(Globals.TEMP_PATH_PREFIX)) {
+                newVar = removed.substring(Globals.TEMP_PATH_PREFIX.length());
+                if(!newVar.startsWith(Globals.PATH_PREFIX)) {
+                    newVar = Globals.PATH_PREFIX + newVar;
+                }
+            }
+            this.whereProvenanceEncodings.put(varName, newVar );
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean updateWhyProvenanceEncodingVariable(String varName, SQLNode node) {
+
+        boolean bool = this.fromNode.updateWhyProvenanceEncodingVariable(varName,  node);
+        if(node.equals(this) || bool) {
+            boolean removed = this.whyProvenanceEncodings.remove(varName);
+
+            if(!removed) {
+                return true;
+            }
 
             String newVar = varName;
-            if (varName.startsWith(Globals.TEMP_VAR_PREFIX)) {
+            if (varName.startsWith(Globals.TEMP_VAR_LIST_PREFIX)) {
+                newVar = Globals.VAR_PREFIX + varName.substring(Globals.TEMP_VAR_LIST_PREFIX.length());
+            }else if (varName.startsWith(Globals.TEMP_VAR_PREFIX)) {
                 newVar = Globals.VAR_PREFIX + varName.substring(Globals.TEMP_VAR_PREFIX.length());
             } else if (varName.startsWith(Globals.TEMP_PATH_PREFIX)) {
-                newVar = Globals.PATH_PREFIX + varName.substring(Globals.TEMP_PATH_PREFIX.length());
+                newVar = varName.substring(Globals.TEMP_PATH_PREFIX.length());
+                if(!newVar.startsWith(Globals.PATH_PREFIX)) {
+                    newVar = Globals.PATH_PREFIX + newVar;
+                }
             }
-            schemaAndSignatures.put(newVar, entry);
+            this.whyProvenanceEncodings.add(newVar);
+            return true;
         }
-        fromNode.updateVarInSchemaAndSignatures(varName);
+        return false;
     }
 
+    public void storeProvenanceEncodingsFromUnion(Set<String> provenanceEncodings){
+
+        this.externalProvenanceEncodings.addAll(provenanceEncodings);
+      //  System.out.println(this.toString(0)+", provenanceEncodingsUnion: " + this.externalProvenanceEncodings);
+    }
     @Override
-    public void updateSchemaAndSignatures(Map<String, List<String>> varSchemaAndSignatures){
+    public void updateSchemaAndSignatures(Set<String> varSchemaAndSignatures){
 
         if(schemaAndSignatures!=null) {
-            for (Map.Entry<String, List<String>> entry : schemaAndSignatures.entrySet()) {
-                varSchemaAndSignatures
-                        .computeIfAbsent(entry.getKey(), k->new ArrayList<>())
-                        .addAll(entry.getValue());
-            }
+            varSchemaAndSignatures.addAll(schemaAndSignatures);
         }
         fromNode.updateSchemaAndSignatures(varSchemaAndSignatures);
 
     }
 
     @Override
-    public Set<Set<String>> calculateWhyProv(Map<String, Object> row) {
-        return fromNode.calculateWhyProv(row);
+    public Set<String> getOriginalReturnVars() {
+        return columns;
     }
-
-    @Override
-    public String calculateHowProv(Map<String, Object> row) {
-        return fromNode.calculateHowProv(row);
-    }
-
-    @Override
-    public Map<String, Set<Object>> calculateWhereProv(Map<String, Object> row) {
-
-        Map<String, Set<Object>> whereProv = new HashMap<>();
-
-        for (String varName : columns) {
-            Set<Object> annotation = new HashSet<>();
-            if (!varName.contains(".")) {
-                if (row.containsKey(Globals.VAR_PREFIX + varName)) {
-                    Entity entity = (Entity) row.get(Globals.VAR_PREFIX + varName);
-                    annotation.add(entity.getAnnotation());
-                } else if (row.containsKey(Globals.PATH_PREFIX + varName)) {
-                    Path path = (Path) row.get(Globals.PATH_PREFIX + varName);
-
-                    for (Entity entity : path) {
-                        annotation.add(entity.getAnnotation());
-                    }
-                }
-
-            } else {
-                String var = varName.substring(0, varName.indexOf("."));
-                if (row.containsKey(Globals.VAR_PREFIX + var)) {
-                    Entity entity = (Entity) row.get(Globals.VAR_PREFIX + var);
-                    String ann = (String) entity.getPropertyAnnotation(varName.substring(varName.indexOf(".") + 1));
-                    if (ann != null) {
-                        annotation.add(ann);
-                    }
-                }
-            }
-            whereProv.put(varName, annotation);
-        }
-        return whereProv;
-    }
-
 }

@@ -39,7 +39,7 @@ def process_csv(file_path, folder_config, keep_header=True):
                 df[new_col] = pd.to_datetime(df[new_col], format='mixed')
 
                 # 2. Convert datetime to milliseconds since epoch
-                df[new_col] = (df[new_col].view('int64') // 10**6)
+                df[new_col] = (df[new_col].astype('int64') // 10**6)
 
     # Add :LABEL or :TYPE column if needed
     if folder_config["type"] == "node":

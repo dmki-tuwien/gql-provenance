@@ -17,9 +17,6 @@ sleep 15
 echo "Switch db to $DATASET $SCALE_FACTOR"
 docker compose exec --user root neo4j sh -c "/scripts/activate_db.sh"
 
-echo "Waiting..."
-sleep 15
-
 docker compose exec --user root neo4j sh -c "/scripts/fix_access_rights.sh"
 
 docker compose down
