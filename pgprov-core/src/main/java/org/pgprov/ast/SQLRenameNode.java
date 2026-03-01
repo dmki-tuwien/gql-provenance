@@ -173,7 +173,7 @@ public class SQLRenameNode extends SQLNode {
         for (String key : rename.keySet()) {
             if (!key.contains(".")) {
                 for(String key2 : varSchemaAndSignatures) {
-                    if(key2.startsWith(Globals.VAR_PREFIX + Globals.NODE_ANNOT_PREFIX+rename.get(key)) || key2.startsWith(Globals.EDGE_ANNOT_PREFIX+rename.get(key))) {
+                    if(key2.startsWith(Globals.VAR_PREFIX + Globals.NODE_ANNOT_PREFIX+rename.get(key)) || key2.startsWith(Globals.VAR_PREFIX + Globals.EDGE_ANNOT_PREFIX+rename.get(key))) {
                         boolean removed = varSchemaAndSignatures.remove(key2);
                         if(removed){
 

@@ -40,7 +40,7 @@ public class GetWhyProvenance {
      */
     @Procedure(name = "org.pgprov.getWhyProvenance")
     @Description("Get the why-provenance of a query result.")
-    public Stream<Row> getWhyProvenance(@Name("query") String query, @Name("params") Map<String, Object> params) throws Exception {
+    public Stream<Row> getWhyProvenance(@Name("query") String query, @Name("params") Map<String, Object> params, @Name("findMinimal") Boolean findMinimal ) throws Exception {
 
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);
@@ -52,7 +52,7 @@ public class GetWhyProvenance {
 
         ParseTreeWalker.DEFAULT.walk(processor, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+//        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(Globals.ProvenanceType.WHY_PROV);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
 
@@ -63,7 +63,7 @@ public class GetWhyProvenance {
         System.out.println("SQL AST: " + processor.getSQLAST().toString(0));
         Result result = tx.execute(updatedQuery, params);
 
-        Grouper<Map<String, Object>,List<List<String>>, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new);
+        Grouper<Map<String, Object>,List<List<String>>, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new, findMinimal);
         return grouper.process(result.stream()).map(row-> new Row(row.getResult(), row.getProv()));
     }
 
@@ -82,6 +82,11 @@ public class GetWhyProvenance {
 
         public InternalRow(Map<String, Object> row, SQLNode sqlNode) {
             super(row, sqlNode);
+        }
+
+        @Override
+        public Set<Set<String>> collectEdgeSubset(Object row) {
+            return Helper.collectEdgeSubset((Map<String, Object>) row);
         }
 
         @Override

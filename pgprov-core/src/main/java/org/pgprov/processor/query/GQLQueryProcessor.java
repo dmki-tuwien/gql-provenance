@@ -896,7 +896,6 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 schemasAndsignatures.add(varName+Globals.PROP_ANNOT_KEY_PREFIX + ctx.propertyName().getText());
             }
         }
-
     }
 
     private void processPatternFiller(GQLParser.ElementPatternFillerContext patternFiller, String patternType) {
@@ -917,7 +916,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 varName = Globals.ANONYMOUS_VAR_PREFIX + varCounter++;
                 this.rewriter.insertBefore(patternFiller.getStart(), varName);
             }
-            schemasAndsignatures.add(prefix + varName);
+//            schemasAndsignatures.add(prefix + varName);
 
             // add labels to variable schema
             if (labelsCtx != null) {
@@ -942,9 +941,9 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
             }
         } else if (patternFiller.elementVariableDeclaration() != null) {
             String varName = patternFiller.elementVariableDeclaration().elementVariable().getText();
-            String prefix = repetitivePathFactorContext != null? Globals.TEMP_VAR_LIST_PREFIX : Globals.TEMP_VAR_PREFIX ;
+//            String prefix = repetitivePathFactorContext != null? Globals.TEMP_VAR_LIST_PREFIX : Globals.TEMP_VAR_PREFIX ;
             varsInMatchClause.add(varName);
-            schemasAndsignatures.add( prefix + varName);
+//            schemasAndsignatures.add( prefix + varName);
         }
     }
 

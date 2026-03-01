@@ -27,7 +27,7 @@ public class App
 {
 
     public static Properties appSettings;
-    public static List<String> provenanceModels = List.of("Why", "Where");
+    public static List<String> provenanceModels = List.of("Why");
 
     public static Double median(List<Double> values) {
         if (values.isEmpty()) {
