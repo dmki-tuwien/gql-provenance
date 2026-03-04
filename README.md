@@ -22,9 +22,27 @@ cd gql
 ./parser-generator.sh
 ```
 * Neo4j plugin implementation which uses PGProv
-2. Build both pgprov core and neo4j plugin
+2. Build both `pgprov-core` and neo4j `plugin`
 ```
 mvn clean package
 ```
 
-## Development
+## Use PGProv
+
+1. Place the plugin in `plugin\target` inside the `plugins` folder of neo4j and start your Neo4J database
+```
+mvn clean package
+```
+2. You may use `org.pgprov.getWhyProvenance(query, params)` procedure to test the query.
+
+## Run Evaluation
+
+1. Build `experiments\driver` module.
+
+2. Run docker setup
+   ```
+   ```
+
+
+
+
