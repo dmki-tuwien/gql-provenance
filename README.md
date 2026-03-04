@@ -39,8 +39,10 @@ mvn clean package
 
 1. Build `experiments\driver` module.
 
-2. Run docker setup
+2. Once the data and parameters are setup, run docker setup
    ```
+   cd experiments
+   .\test_ne04j.sh
    ```
 
 
