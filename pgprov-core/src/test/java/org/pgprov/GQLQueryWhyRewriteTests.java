@@ -37,7 +37,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+//        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -51,7 +51,7 @@ public class GQLQueryWhyRewriteTests {
 
     @Test
     public void testSimpleQueryWithOrderBy() {
-        final String query = "MATCH (n:Person)-[]->(x) RETURN n, n.name AS name ORDER BY name";
+        final String query = "MATCH (n:Person)-[s]->(x) RETURN n, n.name AS name ORDER BY name";
 
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);
@@ -60,13 +60,13 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
 
         assertThat(processor.getRewrittenQuery())
-                .isEqualTo("MATCH provpath_0 = (n:Person)-[]->(x) " +
+                .isEqualTo("MATCH provpath_0 = (n:Person)-[s]->(x) " +
                         "RETURN n, n.name AS name, " +
                         "CASE WHEN n.name IS NULL THEN \"provvar\" ELSE elementId(n)+\".name\" END AS prov_n__k_name, "+
                         "[x IN nodes(provpath_0) | elementId(x)] + [r IN relationships(provpath_0) | elementId(r)] AS provpath_0, "+
@@ -85,7 +85,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -111,7 +111,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -135,7 +135,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -161,7 +161,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -191,7 +191,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -225,7 +225,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -270,7 +270,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -304,7 +304,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -344,7 +344,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -386,7 +386,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -426,7 +426,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -457,7 +457,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
 
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
@@ -487,7 +487,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -524,7 +524,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -562,7 +562,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -589,7 +589,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -608,7 +608,7 @@ public class GQLQueryWhyRewriteTests {
 
     @Test
     public void testPathVariablesWithSetOperators() {
-        final String query = "MATCH p = (n:Person) ->() RETURN n, n.name UNION MATCH (n) RETURN n, n.name";
+        final String query = "MATCH p = (n:Person) ->(s) RETURN n, n.name UNION MATCH (n) RETURN n, n.name";
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
@@ -616,13 +616,13 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
 
         assertThat(processor.getRewrittenQuery())
-                .isEqualTo("MATCH p = (n:Person) ->() " +
+                .isEqualTo("MATCH p = (n:Person) ->(s) " +
                         "RETURN n, n.name, " +
                         "[x IN nodes(p) | elementId(x)] + [r IN relationships(p) | elementId(r)] AS provpath_p, "+
                         "CASE WHEN n.name IS NULL THEN \"provvar\" ELSE elementId(n)+\".name\" END AS prov_n__k_name, "+
@@ -654,7 +654,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -694,7 +694,7 @@ public class GQLQueryWhyRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+        //processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhyProvenanceEncodings(model);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);

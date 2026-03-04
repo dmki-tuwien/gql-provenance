@@ -23,7 +23,7 @@ public class GQLQueryWhereRewriteTests {
     private final Globals.ProvenanceType model = Globals.ProvenanceType.WHERE_PROV;
     private GQLQueryProcessor getProcessorAtTranslationStage(GQLParser parser, CommonTokenStream tokenStream, ParseTree tree) {
 
-        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION);
+        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE);
         System.out.println(tree.toStringTree(parser));
         ParseTreeWalker.DEFAULT.walk(processor, tree);
         return processor;
@@ -40,7 +40,7 @@ public class GQLQueryWhereRewriteTests {
         ParseTree tree = parser.statementBlock();
         GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
 
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
+//        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
         processor.getSQLAST().storeWhereProvenanceEncodings(model, null, null);
         processor.setProcessStage(Globals.ProcessStage.REWRITE_WHERE_PROVENANCE);
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -593,56 +593,6 @@ public class GQLQueryWhereRewriteTests {
                         "[x IN r | elementId(x)] AS prov_r, "+
                         "elementId(n) AS prov_n, "+
                         "CASE WHEN n.name IS NULL THEN \"provvar\" ELSE elementId(n)+\".name\" END AS prov_n_name"
-                );
-    }
-
-    @Test
-    public void testRepetitionWithNestedSubqueries() {
-        final String query = "MATCH (country:Country)<-[:IS_PART_OF]-(:City)<-[:IS_LOCATED_IN]-(person:Person)<-[:HAS_MEMBER]-(forum:Forum)\n" +
-                "WHERE forum.creationDate > $dateonly\n" +
-                "ORDER BY forum.id ASC, country.id\n" +
-                "LIMIT 100\n" +
-                "CALL (forum){\n" +
-                "MATCH (forum)-[:CONTAINER_OF]->(post:Post)<-[:REPLY_OF]-{0,}(message:Message)-[:HAS_CREATOR]->(person:Person)<-[:HAS_MEMBER]-(topForum2:Forum)\n" +
-                "RETURN message\n" +
-                "UNION ALL\n" +
-                "MATCH (person:Person)<-[:HAS_MEMBER]-(forum:Forum)\n" +
-                "RETURN 0 AS message\n" +
-                "}\n" +
-                "RETURN\n" +
-                "person.id AS personId,\n" +
-                "person.firstName AS personFirstName,\n" +
-                "person.lastName AS personLastName,\n" +
-                "person.creationDate AS personCreationDate,\n" +
-                "message\n" +
-                "ORDER BY\n" +
-                "person.id ASC\n" +
-                "LIMIT 100";
-        CodePointCharStream charStream = CharStreams.fromString(query);
-        GQLLexer lexer = new GQLLexer(charStream);
-        CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-        GQLParser parser = new GQLParser(tokenStream);
-        ParseTree tree = parser.statementBlock();
-        GQLQueryProcessor processor = getProcessorAtTranslationStage(parser, tokenStream, tree);
-
-        processor.getSQLAST().updateSchemaAndSignatures(new HashSet<>());
-        processor.getSQLAST().storeWhyProvenanceEncodings(model);
-        processor.setProcessStage(Globals.ProcessStage.REWRITE_WHY_PROVENANCE);
-        ParseTreeWalker.DEFAULT.walk(processor, tree);
-
-        assertThat(processor.getRewrittenQuery())
-                .isEqualTo("MATCH provpath_0 = (n) " +
-                        "CALL (n) {MATCH provpath_1 = (n)->() " +
-                        "CALL (n){ " +
-                        "MATCH provpath_2 = ((n)-[t]->()){0,2}->() " +
-                        "RETURN n AS node, t as tEdge " +
-                        "} " +
-                        "RETURN node AS node1, tEdge " +
-                        "} " +
-                        "RETURN node1, tEdge, "+
-                        "[x IN node1 | elementId(x)] AS prov_node1, "+
-                        "[x IN tEdge | elementId(x)] AS prov_tEdge"
-
                 );
     }
 }

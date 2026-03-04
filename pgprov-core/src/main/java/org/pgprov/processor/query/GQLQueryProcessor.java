@@ -62,7 +62,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void enterStatementBlock(GQLParser.StatementBlockContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) && !init) {
+        if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE)) && !init) {
             this.rootContext = ctx;
             init = true;
         }
@@ -70,7 +70,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitStatementBlock(GQLParser.StatementBlockContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
 
             SQLNode sqlNode;
             List<GQLParser.NextStatementContext> nextStatementContext = ctx.nextStatement();
@@ -86,7 +86,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitStatement(GQLParser.StatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             if (ctx.compositeQueryStatement() != null) {
                 sqlNodes.put(ctx, sqlNodes.get(ctx.compositeQueryStatement()));
                 initialRelation = sqlNodes.get(ctx);
@@ -100,7 +100,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void enterNextStatement(GQLParser.NextStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             if (ctx.yieldClause() != null) {
                 throw new RuntimeException("YIELD clause is not supported.");
             }
@@ -110,7 +110,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitNextStatement(GQLParser.NextStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             if (ctx.yieldClause() != null) {
                 throw new RuntimeException("YIELD clause is not supported.");
             }
@@ -120,7 +120,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitCompositeQueryStatement(GQLParser.CompositeQueryStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.compositeQueryExpression()));
         }
     }
@@ -128,29 +128,29 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void exitCompositeQueryExpression(GQLParser.CompositeQueryExpressionContext ctx) {
 
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) && ctx.queryConjunction() != null && ctx.queryConjunction().setOperator() != null) {
+        if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE)) && ctx.queryConjunction() != null && ctx.queryConjunction().setOperator() != null) {
             SQLNode left = sqlNodes.get(ctx.compositeQueryExpression());
             SQLNode right = sqlNodes.get(ctx.compositeQueryPrimary());
             //Cypher25 only supports UNION operator
             SetOperator op = ctx.queryConjunction().setOperator().UNION() != null ? SetOperator.UNION : null;
             sqlNodes.put(ctx, new SQLSetOpNode(left, right, op));
-        } else if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) && ctx.queryConjunction() == null) {
+        } else if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)|| processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) && ctx.queryConjunction() == null) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.compositeQueryPrimary()));
         }
     }
 
     @Override
     public void exitCompositeQueryPrimary(GQLParser.CompositeQueryPrimaryContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.linearQueryStatement()));
         }
     }
 
     @Override
     public void exitLinearQueryStatement(GQLParser.LinearQueryStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) && ctx.ambientLinearQueryStatement() != null) {
+        if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) && ctx.ambientLinearQueryStatement() != null) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.ambientLinearQueryStatement()));
-        } else if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) && ctx.focusedLinearQueryStatement() != null) {
+        } else if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) )&& ctx.focusedLinearQueryStatement() != null) {
             throw new RuntimeException("Focused Linear Query Statements are not supported.");
             //sqlNodes.put(ctx, sqlNodes.get(ctx.focusedLinearQueryStatement()));
             //TBD
@@ -159,7 +159,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitAmbientLinearQueryStatement(GQLParser.AmbientLinearQueryStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             if (ctx.primitiveResultStatement() != null) {
 
                 GQLParser.ReturnStatementBodyContext returnContext = ctx.primitiveResultStatement().returnStatement().returnStatementBody();
@@ -553,7 +553,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void enterSimpleLinearQueryStatement(GQLParser.SimpleLinearQueryStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             List<GQLParser.SimpleQueryStatementContext> simpleQueryStatements = ctx.simpleQueryStatement();
 
             GQLParser.SimpleQueryStatementContext from = null;
@@ -582,7 +582,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitSimpleLinearQueryStatement(GQLParser.SimpleLinearQueryStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
 
             if (!storedPreStatements.isEmpty()) {
                 preStatementContext = storedPreStatements.removeLast();
@@ -596,7 +596,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitSimpleQueryStatement(GQLParser.SimpleQueryStatementContext statement) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
 
             if (statement.callQueryStatement() != null) {
                 if (preStatementContext == null) {
@@ -652,7 +652,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitFilterStatement(GQLParser.FilterStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, new SQLSelectCriteriaNode(ctx.searchCondition().getText(), new HashSet<>(schemasAndsignatures), new HashSet<>(labelsSignature)));
             schemasAndsignatures.clear();
         }
@@ -660,7 +660,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitLetStatement(GQLParser.LetStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, new SQLRelationNode(ctx.getText(), new HashSet<>(varsInMatchClause), new HashSet<>(schemasAndsignatures), null));
             varsInMatchClause.clear();
             schemasAndsignatures.clear();
@@ -670,7 +670,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void exitMatchStatement(GQLParser.MatchStatementContext ctx) {
 
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             if (ctx.simpleMatchStatement() != null) {
                 sqlNodes.put(ctx, sqlNodes.get(ctx.simpleMatchStatement()));
             } else {
@@ -682,7 +682,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitSimpleMatchStatement(GQLParser.SimpleMatchStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
 
             if (initialRelation != null) {
                 boolean subQueryInnerJoin = true;
@@ -700,7 +700,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitGraphPatternBindingTable(GQLParser.GraphPatternBindingTableContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
 
             sqlNodes.put(ctx, sqlNodes.get(ctx.graphPattern()));
 
@@ -712,7 +712,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitGraphPattern(GQLParser.GraphPatternContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
 
             List<GQLParser.PathPatternContext> pathPatternContexts = ctx.pathPatternList().pathPattern();
             SQLNode from = null;
@@ -741,21 +741,21 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitCallQueryStatement(GQLParser.CallQueryStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.callProcedureStatement()));
         }
     }
 
     @Override
     public void exitCallProcedureStatement(GQLParser.CallProcedureStatementContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.procedureCall()));
         }
     }
 
     @Override
     public void exitProcedureCall(GQLParser.ProcedureCallContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             if (ctx.inlineProcedureCall() != null) {
                 sqlNodes.put(ctx, sqlNodes.get(ctx.inlineProcedureCall()));
                 initialRelation = null;
@@ -767,7 +767,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void enterInlineProcedureCall(GQLParser.InlineProcedureCallContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) && subqueryScopes.containsKey(ctx)) {
+        if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) && subqueryScopes.containsKey(ctx)) {
 
             GQLParser.VariableScopeClauseContext varScopeCtx = ctx.variableScopeClause();
 
@@ -784,28 +784,28 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     @Override
     public void exitInlineProcedureCall(GQLParser.InlineProcedureCallContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.nestedProcedureSpecification()));
         }
     }
 
     @Override
     public void exitNestedProcedureSpecification(GQLParser.NestedProcedureSpecificationContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.procedureSpecification()));
         }
     }
 
     @Override
     public void exitProcedureSpecification(GQLParser.ProcedureSpecificationContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.procedureBody()));
         }
     }
 
     @Override
     public void exitProcedureBody(GQLParser.ProcedureBodyContext ctx) {
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             sqlNodes.put(ctx, sqlNodes.get(ctx.statementBlock()));
         }
     }
@@ -813,16 +813,17 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void enterNodePattern(GQLParser.NodePatternContext ctx) {
 
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) { //changed
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {//changed
             GQLParser.ElementPatternFillerContext patternFiller = ctx.elementPatternFiller();
-            processPatternFiller(patternFiller, Globals.NODE_ANNOT_PREFIX);
+            boolean storeAllVariables = processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE);
+            processPatternFiller(patternFiller, Globals.NODE_ANNOT_PREFIX, storeAllVariables);
         }
     }
 
     @Override
     public void enterEdgePattern(GQLParser.EdgePatternContext ctx) {
 
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) { //changed
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) { //changed
             if (ctx.fullEdgePattern() != null) {
                 GQLParser.ElementPatternFillerContext patternFiller;
                 if (ctx.fullEdgePattern().fullEdgePointingLeft() != null) {
@@ -840,7 +841,9 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 } else {
                     patternFiller = ctx.fullEdgePattern().fullEdgeAnyDirection().elementPatternFiller();
                 }
-                processPatternFiller(patternFiller, Globals.EDGE_ANNOT_PREFIX);
+
+                boolean storeAllVariables = processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE);
+                processPatternFiller(patternFiller, Globals.EDGE_ANNOT_PREFIX, storeAllVariables);
 
             }
         }
@@ -849,7 +852,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void exitPathPattern(GQLParser.PathPatternContext ctx) {
 
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {  //changed
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {  //changed
             // add path variables to pattern expressions
             if (ctx.pathVariableDeclaration() == null) {
                 String newVar = Globals.PATH_PREFIX + counter++;
@@ -888,7 +891,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void enterValueExpressionPrimary(GQLParser.ValueExpressionPrimaryContext ctx) {
 
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION)) {
+        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
             // add properties referenced in other clauses than MATCH
             if (ctx.propertyName() != null && ctx.valueExpressionPrimary() != null && ctx.valueExpressionPrimary().bindingVariableReference() != null) {
 
@@ -898,7 +901,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
         }
     }
 
-    private void processPatternFiller(GQLParser.ElementPatternFillerContext patternFiller, String patternType) {
+    private void processPatternFiller(GQLParser.ElementPatternFillerContext patternFiller, String patternType, boolean storeAllVariables) {
 
         GQLParser.IsLabelExpressionContext labelsCtx = patternFiller.isLabelExpression();
         GQLParser.ElementPatternPredicateContext predicate = patternFiller.elementPatternPredicate();
@@ -916,7 +919,10 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                 varName = Globals.ANONYMOUS_VAR_PREFIX + varCounter++;
                 this.rewriter.insertBefore(patternFiller.getStart(), varName);
             }
-//            schemasAndsignatures.add(prefix + varName);
+
+            if(storeAllVariables) {
+                schemasAndsignatures.add(prefix + varName);
+            }
 
             // add labels to variable schema
             if (labelsCtx != null) {
@@ -941,9 +947,12 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
             }
         } else if (patternFiller.elementVariableDeclaration() != null) {
             String varName = patternFiller.elementVariableDeclaration().elementVariable().getText();
-//            String prefix = repetitivePathFactorContext != null? Globals.TEMP_VAR_LIST_PREFIX : Globals.TEMP_VAR_PREFIX ;
             varsInMatchClause.add(varName);
-//            schemasAndsignatures.add( prefix + varName);
+
+            if(storeAllVariables) {
+                String prefix = repetitivePathFactorContext != null? Globals.TEMP_VAR_LIST_PREFIX : Globals.TEMP_VAR_PREFIX ;
+                schemasAndsignatures.add( prefix + varName);
+            }
         }
     }
 

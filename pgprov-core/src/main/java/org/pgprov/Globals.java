@@ -26,7 +26,8 @@ public class Globals {
     public static String ID_FUNCTION = "elementId";
 
     public enum ProcessStage {
-        SQL_TRANSLATION,
+        SQL_TRANSLATION,            //Why-provenance + Where-provenance
+        SQL_TRANSLATION_WHERE_PROVENANCE, // Where-provenance
         REWRITE_WHY_PROVENANCE,
         REWRITE_WHERE_PROVENANCE,
         INDIVIDUAL_QUERY_PROCESS

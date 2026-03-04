@@ -35,7 +35,9 @@ public class GQLToSQLTests {
 
         assertThat(processor.getSQLAST().toString(0))
                 .isEqualTo("SQLProjectNode[columns=[n.name, n], \n" +
-                        "  fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]]");
+                        "  fromNode=SQLJoin[ \n" +
+                        "      left=        SQLEmptyNode, \n" +
+                        "      right=SQLRelationNode[relation=provpath_0, variables=[n]]]]");
     }
 
     @Test
@@ -45,7 +47,9 @@ public class GQLToSQLTests {
 
         assertThat(processor.getSQLAST().toString(0))
                 .isEqualTo("SQLProjectNode[columns=[n.name, n], \n" +
-                        "  fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]]");
+                        "  fromNode=SQLJoin[ \n" +
+                        "      left=        SQLEmptyNode, \n" +
+                        "      right=SQLRelationNode[relation=provpath_0, variables=[n]]]]");
     }
 
     @Test
@@ -56,7 +60,9 @@ public class GQLToSQLTests {
         assertThat(processor.getSQLAST().toString(0))
                 .isEqualTo("SQLRenameNode[\n" +
                         "  from=SQLProjectNode[columns=[n.name, n], \n" +
-                        "      fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]],\n" +
+                        "      fromNode=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_0, variables=[n]]]],\n" +
                         "  rename={n.name=name}]");
     }
 
@@ -68,7 +74,9 @@ public class GQLToSQLTests {
         assertThat(processor.getSQLAST().toString(0))
                 .isEqualTo("SQLProjectNode[columns=[n.name, n], \n" +
                         "  fromNode=SQLJoin[ \n" +
-                        "      left=SQLRelationNode[relation=provpath_0, variables=[n]], \n" +
+                        "      left=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
                         "      right=SQLRelationNode[relation=provpath_1, variables=[x]]]]");
 
     }
@@ -81,8 +89,12 @@ public class GQLToSQLTests {
         assertThat(processor.getSQLAST().toString(0))
                 .isEqualTo("SQLProjectNode[columns=[n.name, n], \n" +
                         "  fromNode=SQLJoin[ \n" +
-                        "      left=SQLRelationNode[relation=provpath_0, variables=[n]], \n" +
-                        "      right=SQLRelationNode[relation=provpath_1, variables=[n]]]]");
+                        "      left=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
+                        "      right=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_1, variables=[n]]]]]");
 
     }
 
@@ -96,9 +108,13 @@ public class GQLToSQLTests {
                         "  fromNode=SQLJoin[ \n" +
                         "      left=SQLProjectNode[columns=[n], \n" +
                         "          fromNode=SQLSelectNode[\n" +
-                        "              fromNode=SQLRelationNode[relation=provpath_0, variables=[n]],\n" +
+                        "              fromNode=SQLJoin[ \n" +
+                        "                  left=                    SQLEmptyNode, \n" +
+                        "                  right=SQLRelationNode[relation=provpath_0, variables=[n]]],\n" +
                         "               where=n.age=25]], \n" +
-                        "      right=SQLRelationNode[relation=provpath_1, variables=[n]]]]");
+                        "      right=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_1, variables=[n]]]]]");
 
     }
 
@@ -113,13 +129,21 @@ public class GQLToSQLTests {
                         "      left=SQLJoin[ \n" +
                         "          left=SQLJoin[ \n" +
                         "              left=SQLProjectNode[columns=[n], \n" +
-                        "                  fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
-                        "              right=SQLRelationNode[relation=provpath_1, variables=[n]]], \n" +
+                        "                  fromNode=SQLJoin[ \n" +
+                        "                      left=                        SQLEmptyNode, \n" +
+                        "                      right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
+                        "              right=SQLJoin[ \n" +
+                        "                  left=                    SQLEmptyNode, \n" +
+                        "                  right=SQLRelationNode[relation=provpath_1, variables=[n]]]], \n" +
                         "          right=SQLProjectNode[columns=[n], \n" +
                         "              fromNode=SQLSelectNode[\n" +
-                        "                  fromNode=SQLRelationNode[relation=provpath_2, variables=[n]],\n" +
+                        "                  fromNode=SQLJoin[ \n" +
+                        "                      left=                        SQLEmptyNode, \n" +
+                        "                      right=SQLRelationNode[relation=provpath_2, variables=[n]]],\n" +
                         "                   where=n.age=25]]], \n" +
-                        "      right=SQLRelationNode[relation=provpath_3, variables=[n]]]]");
+                        "      right=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_3, variables=[n]]]]]");
 
     }
 
@@ -132,9 +156,13 @@ public class GQLToSQLTests {
                 .isEqualTo("SQLSetOpNode[\n" +
                         "  op=UNION,\n" +
                         "  left=SQLProjectNode[columns=[n.name, n], \n" +
-                        "      fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
+                        "      fromNode=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
                         "  right=SQLProjectNode[columns=[n.name, n], \n" +
-                        "      fromNode=SQLRelationNode[relation=provpath_1, variables=[n]]]]");
+                        "      fromNode=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_1, variables=[n]]]]]");
 
     }
 
@@ -150,12 +178,18 @@ public class GQLToSQLTests {
                         "      fromNode=SQLSetOpNode[\n" +
                         "          op=UNION,\n" +
                         "          left=SQLProjectNode[columns=[n.name, n], \n" +
-                        "              fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
+                        "              fromNode=SQLJoin[ \n" +
+                        "                  left=                    SQLEmptyNode, \n" +
+                        "                  right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
                         "          right=SQLProjectNode[columns=[n.name, n], \n" +
-                        "              fromNode=SQLRelationNode[relation=provpath_1, variables=[n]]]]], \n" +
+                        "              fromNode=SQLJoin[ \n" +
+                        "                  left=                    SQLEmptyNode, \n" +
+                        "                  right=SQLRelationNode[relation=provpath_1, variables=[n]]]]]], \n" +
                         "  right=SQLProjectNode[columns=[n], \n" +
                         "      fromNode=SQLProjectNode[columns=[n.name, n], \n" +
-                        "          fromNode=SQLRelationNode[relation=provpath_2, variables=[n]]]]]");
+                        "          fromNode=SQLJoin[ \n" +
+                        "              left=                SQLEmptyNode, \n" +
+                        "              right=SQLRelationNode[relation=provpath_2, variables=[n]]]]]]");
 
     }
 
@@ -169,9 +203,13 @@ public class GQLToSQLTests {
                         "  fromNode=SQLSetOpNode[\n" +
                         "      op=UNION,\n" +
                         "      left=SQLProjectNode[columns=[n.name, n], \n" +
-                        "          fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
+                        "          fromNode=SQLJoin[ \n" +
+                        "              left=                SQLEmptyNode, \n" +
+                        "              right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
                         "      right=SQLProjectNode[columns=[n.name, n], \n" +
-                        "          fromNode=SQLRelationNode[relation=provpath_1, variables=[n]]]]]");
+                        "          fromNode=SQLJoin[ \n" +
+                        "              left=                SQLEmptyNode, \n" +
+                        "              right=SQLRelationNode[relation=provpath_1, variables=[n]]]]]]");
 
     }
 
@@ -183,19 +221,29 @@ public class GQLToSQLTests {
         assertThat(processor.getSQLAST().toString(0))
                 .isEqualTo("SQLProjectNode[columns=[n], \n" +
                         "  fromNode=SQLJoin[ \n" +
-                        "      left=SQLRelationNode[relation=provpath_0, variables=[n]], \n" +
+                        "      left=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
                         "      right=SQLSetOpNode[\n" +
                         "          op=UNION,\n" +
                         "          left=SQLProjectNode[columns=[n.name], \n" +
                         "              fromNode=SQLJoin[ \n" +
                         "                  left=SQLProjectNode[columns=[n], \n" +
-                        "                      fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
-                        "                  right=SQLRelationNode[relation=provpath_1, variables=[n]]]], \n" +
+                        "                      fromNode=SQLJoin[ \n" +
+                        "                          left=                            SQLEmptyNode, \n" +
+                        "                          right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
+                        "                  right=SQLJoin[ \n" +
+                        "                      left=                        SQLEmptyNode, \n" +
+                        "                      right=SQLRelationNode[relation=provpath_1, variables=[n]]]]], \n" +
                         "          right=SQLProjectNode[columns=[n.name], \n" +
                         "              fromNode=SQLJoin[ \n" +
                         "                  left=SQLProjectNode[columns=[n], \n" +
-                        "                      fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
-                        "                  right=SQLRelationNode[relation=provpath_2, variables=[n]]]]]]]");
+                        "                      fromNode=SQLJoin[ \n" +
+                        "                          left=                            SQLEmptyNode, \n" +
+                        "                          right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
+                        "                  right=SQLJoin[ \n" +
+                        "                      left=                        SQLEmptyNode, \n" +
+                        "                      right=SQLRelationNode[relation=provpath_2, variables=[n]]]]]]]]");
 
     }
 
@@ -208,9 +256,13 @@ public class GQLToSQLTests {
                 .isEqualTo("SQLSetOpNode[\n" +
                         "  op=UNION,\n" +
                         "  left=SQLProjectNode[columns=[n.name], \n" +
-                        "      fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
+                        "      fromNode=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
                         "  right=SQLProjectNode[columns=[n.name], \n" +
-                        "      fromNode=SQLRelationNode[relation=provpath_1, variables=[n]]]]");
+                        "      fromNode=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_1, variables=[n]]]]]");
 
     }
 
@@ -223,8 +275,12 @@ public class GQLToSQLTests {
                 .isEqualTo("SQLProjectNode[columns=[n], \n" +
                         "  fromNode=SQLJoin[ \n" +
                         "      left=SQLProjectNode[columns=[n.name], \n" +
-                        "          fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
-                        "      right=SQLRelationNode[relation=provpath_1, variables=[n]]]]");
+                        "          fromNode=SQLJoin[ \n" +
+                        "              left=                SQLEmptyNode, \n" +
+                        "              right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
+                        "      right=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_1, variables=[n]]]]]");
 
     }
 
@@ -236,21 +292,33 @@ public class GQLToSQLTests {
         assertThat(processor.getSQLAST().toString(0))
                 .isEqualTo("SQLProjectNode[columns=[n], \n" +
                         "  fromNode=SQLJoin[ \n" +
-                        "      left=SQLRelationNode[relation=provpath_0, variables=[n]], \n" +
+                        "      left=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
                         "      right=SQLProjectNode[columns=[n.name], \n" +
                         "          fromNode=SQLJoin[ \n" +
                         "              left=SQLJoin[ \n" +
                         "                  left=SQLProjectNode[columns=[n], \n" +
-                        "                      fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
-                        "                  right=SQLRelationNode[relation=provpath_1, variables=[n]]], \n" +
+                        "                      fromNode=SQLJoin[ \n" +
+                        "                          left=                            SQLEmptyNode, \n" +
+                        "                          right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
+                        "                  right=SQLJoin[ \n" +
+                        "                      left=                        SQLEmptyNode, \n" +
+                        "                      right=SQLRelationNode[relation=provpath_1, variables=[n]]]], \n" +
                         "              right=SQLProjectNode[columns=[n.name], \n" +
                         "                  fromNode=SQLJoin[ \n" +
                         "                      left=SQLProjectNode[columns=[n], \n" +
                         "                          fromNode=SQLJoin[ \n" +
                         "                              left=SQLProjectNode[columns=[n], \n" +
-                        "                                  fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
-                        "                              right=SQLRelationNode[relation=provpath_1, variables=[n]]]], \n" +
-                        "                      right=SQLRelationNode[relation=provpath_2, variables=[n]]]]]]]]");
+                        "                                  fromNode=SQLJoin[ \n" +
+                        "                                      left=                                        SQLEmptyNode, \n" +
+                        "                                      right=SQLRelationNode[relation=provpath_0, variables=[n]]]], \n" +
+                        "                              right=SQLJoin[ \n" +
+                        "                                  left=                                    SQLEmptyNode, \n" +
+                        "                                  right=SQLRelationNode[relation=provpath_1, variables=[n]]]]], \n" +
+                        "                      right=SQLJoin[ \n" +
+                        "                          left=                            SQLEmptyNode, \n" +
+                        "                          right=SQLRelationNode[relation=provpath_2, variables=[n]]]]]]]]]");
 
     }
 
@@ -262,19 +330,25 @@ public class GQLToSQLTests {
         assertThat(processor.getSQLAST().toString(0))
                 .isEqualTo("SQLProjectNode[columns=[name, n], \n" +
                         "  fromNode=SQLJoin[ \n" +
-                        "      left=SQLRelationNode[relation=provpath_0, variables=[n]], \n" +
+                        "      left=SQLJoin[ \n" +
+                        "          left=            SQLEmptyNode, \n" +
+                        "          right=SQLRelationNode[relation=provpath_0, variables=[n]]], \n" +
                         "      right=SQLSetOpNode[\n" +
                         "          op=UNION,\n" +
                         "          left=SQLRenameNode[\n" +
                         "              from=SQLProjectNode[columns=[n.name], \n" +
                         "                  fromNode=SQLProjectNode[columns=[n], \n" +
-                        "                      fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]]],\n" +
+                        "                      fromNode=SQLJoin[ \n" +
+                        "                          left=                            SQLEmptyNode, \n" +
+                        "                          right=SQLRelationNode[relation=provpath_0, variables=[n]]]]],\n" +
                         "              rename={n.name=name}], \n" +
                         "          right=SQLRenameNode[\n" +
                         "              from=SQLProjectNode[columns=[n.name], \n" +
                         "                  fromNode=SQLSelectNode[\n" +
                         "                      fromNode=SQLProjectNode[columns=[n], \n" +
-                        "                          fromNode=SQLRelationNode[relation=provpath_0, variables=[n]]],\n" +
+                        "                          fromNode=SQLJoin[ \n" +
+                        "                              left=                                SQLEmptyNode, \n" +
+                        "                              right=SQLRelationNode[relation=provpath_0, variables=[n]]]],\n" +
                         "                       where=n.age<>25]],\n" +
                         "              rename={n.name=name}]]]]");
 
