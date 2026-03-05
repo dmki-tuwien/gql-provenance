@@ -4,6 +4,7 @@ services:
     container_name: koumudi-neo4j-new
     tty: true
     stdin_open: true
+    cpus: 40
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -19,7 +20,10 @@ services:
       NEO4J_server_directories_logs: /logs
       NEO4J_server_directories_import: /import
       NEO4J_internal_dbms_tx__log_fail__on__corrupted__log__files: "false"
-      NEO4J_dbms_memory_transaction_total_max : 60G
+      NEO4J_dbms_memory_heap_initial__size : 200G
+      NEO4J_dbms_memory_heap_max__size : 250G
+      NEO4J_dbms_memory_transaction_total_max : 450G
+      NEO4J_server_threads_worker__count: 40
     volumes:
       - ./neo4j/setup/plugins:/var/lib/neo4j/plugins
       - ./neo4j/setup/scripts:/scripts

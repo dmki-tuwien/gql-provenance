@@ -12,10 +12,10 @@ download.sh $DATA_DIRECTORY
 2. Update .env file with the relevant scale factors
 3. Finish data setup
 ```angular2html
-docker-compose up -d
+docker compose up -d
 ```
 
 4. Turn down the docker setup
 ```angular2html
-docker-compose down -d
+docker compose down -d
 ```
