@@ -1,10 +1,3 @@
-# General
-
-This module contains data processing pipelines for the LDBC Finbench and SNB-BI benchmarks, organized as follows:
-* [**download**](./download): Handles dataset retrieval, updates CSV file headers if necessary, and generates required parameters for evaluation.
-* [**load**](./load): Loads CSV data into a Neo4j database.
-
-
 # Datasets
 
 In this repository, we use the LDBC Finbench and LDBC SNB-BI benchmark datasets.
@@ -24,4 +17,22 @@ In this repository, we use the LDBC Finbench and LDBC SNB-BI benchmark datasets.
 | &nbsp;&nbsp;&nbsp;Generated using [official data generator](https://github.com/ldbc/ldbc_finbench_datagen) |✓  | - |✓ | - |
 | **LDBC SNB-BI**                                                                          |    |   |  |   |
 | &nbsp;&nbsp;&nbsp;Published in [official site](https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi#files)       |-   | ✓ | ✓ | ✓ |
+
+# Setup
+## Download and Process Data
+
+The [**download**](./download) directory contains benchmark-specific scripts to:
+* download the datasets
+* update CSV headers when required
+* generate query parameters for evaluation
+
+Detailed instructions are available in 
+* [LDBC Finbench ReadMe](./download/ldbc_finbench/README.md), and 
+* [LDBC SNB-BI ReadMe](./download/ldbc_snb/README.md).
+
+
+## Load Data
+The [**load**](./load) directory contains scripts for loading the processed CSV datasets into graph databases.
+Currently, we support,
+* Neo4j
 
