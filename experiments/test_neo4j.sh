@@ -9,6 +9,10 @@ sed -e "s|{{DATASET}}|$DATASET|g" \
 -e "s|{{TEST_RUN}}|$TEST_RUN|g" \
 ./driver/configs/config.properties.tmp > ./driver/configs/config.properties
 
+mkdir -p neo4j/setup/plugins/
+mkdir -p neo4j/setup/scripts/
+cp -r ../data/load/neo4j/setup/scripts/* neo4j/setup/scripts/
+
 cp ../plugin/target/pgprov-neo4j-plugin-1.0.jar neo4j/setup/plugins/
 
 docker compose up -d
@@ -35,6 +39,8 @@ sleep 60
 docker compose exec -u neo4j neo4j cypher-shell -u $USERNAME -p $PASSWORD "ALTER DATABASE neo4j SET DEFAULT LANGUAGE CYPHER 25;"
 
 docker compose exec --user root test-driver sh -c "/app/scripts/setup.sh"
+
+echo "Start experiments"
 
 docker compose exec test-driver sh -c "java -jar app.jar"
 
