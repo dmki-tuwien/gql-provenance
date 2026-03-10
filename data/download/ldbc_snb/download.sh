@@ -1,25 +1,17 @@
 #!/bin/bash
 
-
-## extract all zip files:  find . -type f -name '*.gz' -exec gunzip -f {} \;
+#https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi#files
 OUTPUT_DIR=$1/snb
 PARAMS_DIR=$1/params/snb
 #/data/pgprov
-#/home/user/data/
 
 declare -A DATASET_MAPPING=(
-  ["0.1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf0.1-CsvBasic-LongDateFormatter.tar.zst"
-#  ["1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf1-CsvBasic-LongDateFormatter.tar.zst"
-#  ["10"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-interactive-v1-datagen-v100/files/social_network-sf10-CsvBasic-LongDateFormatter.tar.zst"
-  ["1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi/files/bi-sf1-composite-merged-fk.tar.zst"
-  ["3"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi/files/bi-sf3-composite-merged-fk.tar.zst"
+  ["1"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi/files/bi-sf1-composite-projected-fk.tar.zst"
+  ["3"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi/files/bi-sf3-composite-projected-fk.tar.zst"
+  ["10"]="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi/files/bi-sf10-composite-projected-fk.tar.zst"
 )
 
-declare -A PARAMS_MAPPING=(
-  ["0.1"]="https://repository.surfsara.nl/datasets/cwi/snb/files/substitution_parameters/substitution_parameters-sf0.1.tar.zst"
-  ["1"]="https://repository.surfsara.nl/datasets/cwi/snb/files/substitution_parameters/substitution_parameters-sf1.tar.zst"
-  ["10"]="https://repository.surfsara.nl/datasets/cwi/snb/files/substitution_parameters/substitution_parameters-sf10.tar.zst"
-)
+PARAMS_URL="https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi/files/bi-parameters-sf1-to-sf30000.zip"
 
 mkdir -p $OUTPUT_DIR
 
@@ -63,50 +55,54 @@ for scale in "${!DATASET_MAPPING[@]}"; do
   if [ ! -d "$extract_dir" ]; then
     echo "Extracting $archive"
     tar -xvf "$archive" --use-compress-program=unzstd
+
+    echo "Removing headers.."
+    find . -type f -name '*.gz' -exec gunzip -f {} \;
+    find . -type f -name 'part-*.csv' -exec sh -c 'tail -n +2 "$0" > "$0.tmp" && mv "$0.tmp" "$0"' {} \;
+    echo "Done."
   else
     echo "✓ $extract_dir already extracted"
   fi
+  echo
 
-  url="${PARAMS_MAPPING[$scale]}"
-  zip_file="$(basename "$url")"
+done
 
-  mkdir -p "${PARAMS_DIR}/sf_${scale}"
-  cd "${PARAMS_DIR}/sf_${scale}"
+url="${PARAMS_URL}"
+zip_file="$(basename "$url")"
 
-  # Download zip
-  if [ ! -f "$zip_file" ]; then
-    echo "Downloading $zip_file"
+mkdir -p "${PARAMS_DIR}/"
+cd "${PARAMS_DIR}/"
 
-    echo "Preparing to download ${url}"
-    while [[ $(curl -k -sI ${url} | grep -q 'HTTP/1.1 409 Conflict') ]]; do
-        echo "Data set is not staged, attempting to stage..."
+# Download zip
+if [ ! -f "$zip_file" ]; then
+  echo "Downloading $zip_file"
+
+  echo "Preparing to download ${url}"
+  while [[ $(curl -k -sI ${url} | grep -q 'HTTP/1.1 409 Conflict') ]]; do
+      echo "Data set is not staged, attempting to stage..."
         STAGING_URL=$(curl --silent ${url} | grep -Eo 'https:\\/\\/repository.surfsara.nl\\/api\\/objects\\/cwi\\/[A-Za-z0-9_-]+\\/stage\\/[0-9]+' | sed 's#\\##g')
 
         if [[ -z ${STAGING_URL} ]]; then
             echo "Could not retrieve staging URL, exiting..."
             exit 1
         fi
-        curl ${STAGING_URL} --data-raw 'share-token='
+#        curl ${STAGING_URL} --data-raw 'share-token='
         echo "Staging initiated through ${STAGING_URL}"
         echo "Wait for 30 seconds"
         sleep 30
-    done
+  done
 
-    echo "Downloading data set"
-    wget --no-check-certificate -O $param_dir/$zip_file ${url}
+  echo "Downloading parameters"
+  wget --no-check-certificate -O $zip_file ${url}
 
-  else
-    echo "$zip_file already downloaded"
-  fi
+else
+  echo "$zip_file already downloaded"
+fi
 
-  # Extract zip
-  if [ -z "$(ls -A . | grep -v "$zip_file")" ]; then
-    echo "Extracting $zip_file"
-    tar -xvf "$zip_file" --use-compress-program=unzstd
-  else
-    echo "Params already extracted"
-  fi
-
-  echo
-
-done
+# Extract zip
+if [ -z "$(ls -A . | grep -v "$zip_file")" ]; then
+  echo "Extracting $zip_file"
+  python3 -m zipfile -e $zip_file .
+else
+  echo "Params already extracted"
+fi

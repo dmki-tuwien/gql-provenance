@@ -1,20 +1,4 @@
 #!/usr/bin/env bash
-#
-#CALL apoc.export.csv.query(
-#  "CALL(){
-#MATCH (m:Message) RETURN m.id AS messageId
-#UNION
-#MATCH (i:Message)-[:REPLY_OF]->(:Message)
-#RETURN i.id AS messageId
-#UNION
-#MATCH (:Message)-[:REPLY_OF]->(j:Message)
-#RETURN j.id AS messageId
-#}
-#RETURN messageId
-#ORDER BY rand()
-#LIMIT 300", "/import/snb/sf_0.1/substitution_parameters-sf0.1/interactive_15_param.txt",
-#  {}
-#);
 
 set -euo pipefail
 

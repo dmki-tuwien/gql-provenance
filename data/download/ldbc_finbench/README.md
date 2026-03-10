@@ -1,21 +1,23 @@
 # LDBC Finbench Data Setup
 
-## How to
+This contains the data setup pipeline for LDBC Finbench benchmark
 
-1. Download data to your data directory
+## Download data
+
+Download data to your data directory. Modify `download.sh` to fetch only the required scale factors.
 
 ```angular2html
 download.sh $DATA_DIRECTORY
 ```
- You can update the download links in download.sh if needed.
 
-2. Update .env file with the relevant scale factors
-3. Finish data setup
+## Post process
+For each scale factor,
+1. Update .env file with the scale factor, data directory and whether the parameters need to be generated or not. 
+2. Start the post process
 ```angular2html
 docker compose up -d
 ```
-
-4. Turn down the docker setup
+3. Turn down the docker setup
 ```angular2html
 docker compose down -d
 ```
