@@ -64,6 +64,8 @@ cd experiments/
 .\test_ne04j.sh
 ```
 
+4. Experiment results are saved as CSV files in `result/metrics/${TEST_RUN}`.
+
 ## Use PGProv on Neo4j
 
 1. Place the plugin in `plugin\target` inside the `plugins` folder of neo4j and start your Neo4J database
