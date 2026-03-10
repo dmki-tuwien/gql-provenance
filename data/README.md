@@ -34,5 +34,5 @@ Detailed instructions are available in
 ## Load Data
 The [**load**](./load) directory contains scripts for loading the processed CSV datasets into graph databases.
 Currently, we support,
-* Neo4j
+* [Neo4j](./load/neo4j/README.md)
 

@@ -13,6 +13,8 @@ This repository contains
 * [**pgprov-core**](./pgprov-core): a middleware-library facilitating provenance computation
 * [**plugin**](./plugin): Neo4j plugin implementation which uses the above
 
+We currently support evaluation of our library on Neo4j graph database.
+
 ## Getting Started
 
 ### Prerequisites
@@ -24,7 +26,7 @@ This repository already includes the executable parser code for GQL with Antlr. 
 cd gql
 ./parser-generator.sh
 ```
-## Dataset
+## Datasets
 
 | **Data**                                                                                                                  | 0.3 | 1  | 3  | 10 |
 |---------------------------------------------------------------------------------------------------------------------------|-----|----|----|----|
@@ -42,13 +44,9 @@ cd gql
 TODO : For the convenience of running experiments, the datasets used (with updated headers) along with the parameters will be published.
 
 ## Data Setup
-Data downloaded from the above links were preprocessed (headers were updated) and loaded to Neo4j.
-1. Download [LDBC Finbench](./data/download/ldbc_finbench/README.md) and [LDBC SNB-BI data](./data/download/ldbc_snb/README.md).
+Instructions for downloading and loading the datasets into a graph database are available [here](./data/README.md).
 
-2. [Load a dataset to Neo4j](./data/load/neo4j/README.md). 
-
-## Run Experiments
-
+## Run Experiments on Neo4j
 1. Build both `pgprov-core` and neo4j `plugin`.
 ```
 mvn clean package
@@ -62,16 +60,15 @@ mvn clean package
 
 3. Update [.env](experiments/.env) file and run experiments for a dataset.
 ```
+cd experiments/
 .\test_ne04j.sh
 ```
 
-## Use PGProv
+## Use PGProv on Neo4j
 
 1. Place the plugin in `plugin\target` inside the `plugins` folder of neo4j and start your Neo4J database
-```
-mvn clean package
-```
-2. You may use `org.pgprov.getWhyProvenance(query, params)` procedure to test the query.
+
+2. You may use `org.pgprov.getWhyProvenance(query, params)` procedure to compute provenance for query results of a given query.
 
 
 
