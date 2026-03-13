@@ -1,6 +1,6 @@
 //finbench-1.3
 MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,3}(other:ACCOUNT),
-(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:"WIFI"})
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:'WIFI'})    // since isBlocked : true returns 0 results
 //WITH p, other, medium
 WHERE $START_TIME < edge2.createTime < $END_TIME
 RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.mediumType AS mediumType
@@ -8,7 +8,7 @@ ORDER BY accountDistance ASC;
 
 //finbench-1.1.1
 MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->(other:ACCOUNT),
-(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:"WIFI"})
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:'WIFI'})
 //WITH p, other, medium
 WHERE $START_TIME < edge2.createTime < $END_TIME
 RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.mediumType AS mediumType
@@ -16,7 +16,7 @@ ORDER BY accountDistance ASC;
 
 //finbench-1.1
 MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,1}(other:ACCOUNT),
-(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:"WIFI"})
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:'WIFI'})
 //WITH p, other, medium
 WHERE $START_TIME < edge2.createTime < $END_TIME
 RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.mediumType AS mediumType
@@ -24,7 +24,7 @@ ORDER BY accountDistance ASC;
 
 //finbench-1.2
 MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,2}(other:ACCOUNT),
-(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:"WIFI"})
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:'WIFI'})
 //WITH p, other, medium
 WHERE $START_TIME < edge2.createTime < $END_TIME
 RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.mediumType AS mediumType
@@ -32,7 +32,7 @@ ORDER BY accountDistance ASC;
 
 //finbench-1.4
 MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,4}(other:ACCOUNT),
-(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:"WIFI"})
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:'WIFI'})
 //WITH p, other, medium
 WHERE $START_TIME < edge2.createTime < $END_TIME
 RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.mediumType AS mediumType
@@ -40,7 +40,7 @@ ORDER BY accountDistance ASC;
 
 //finbench-1.5
 MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,5}(other:ACCOUNT),
-(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:"WIFI"})
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:'WIFI'})
 //WITH p, other, medium
 WHERE $START_TIME < edge2.createTime < $END_TIME
 RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.mediumType AS mediumType
@@ -48,7 +48,7 @@ ORDER BY accountDistance ASC;
 
 //finbench-1.6
 MATCH p=(account:ACCOUNT {id: $ID})-[edge1:TRANSFER]->{1,6}(other:ACCOUNT),
-(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:"WIFI"})
+(other)<-[edge2:SIGN_IN]-(medium:MEDIUM {mediumType:'WIFI'})
 //WITH p, other, medium
 WHERE $START_TIME < edge2.createTime < $END_TIME
 RETURN other.id AS otherId, p AS accountDistance, medium.id AS mediumId, medium.mediumType AS mediumType
