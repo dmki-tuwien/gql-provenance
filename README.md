@@ -41,7 +41,7 @@ cd gql
 | **LDBC SNB-BI**                                                                          |    |   |  |   |
 | &nbsp;&nbsp;&nbsp;Published in [official site](https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi#files)       |-   | ✓ | ✓ | ✓ |
 
-TODO : For the convenience of running experiments, the datasets used (with updated headers) along with the parameters will be published.
+For the convenience of running experiments, the datasets used (with updated headers) along with the evaluation parameters are published [here](https://zenodo.org/records/18865136).
 
 ## Data Setup
 Instructions for downloading and loading the datasets into a graph database are available [here](./data/README.md).

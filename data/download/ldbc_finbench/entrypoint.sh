@@ -2,6 +2,7 @@
 set -e
 
 echo "LDBC Finbench Running for scale factor ${SCALE_FACTOR}.."
+echo "$GENERATE_PARAMS"
 
 if [ "$GENERATE_PARAMS" = "1" ]; then
   echo "Starting parameter generation..."
@@ -19,10 +20,16 @@ if [ "$GENERATE_PARAMS" = "1" ]; then
 
   if [ "$SCALE_FACTOR" = "0.3" ]; then
     ## Adjust the random parameter ratio for small scale factors
-    sed -i 's/final_first_items = search_params\.generate(first_array, 0\.01)/final_first_items = search_params.generate(first_array, 0.1)/' parameter_curation.py
+    sed -i 's/final_first_items = search_params\.generate(first_array, 0\.01)/final_first_items = search_params.generate(first_array, 0.1)/' ./paramgen/parameter_curation.py
   fi
-  sed -i 's|chunks = np.array_split(neighbors_df, query_parallelism)|indices = np.array_split(neighbors_df.index, query_parallelism); chunks = [neighbors_df.loc[idx] for idx in indices]|' parameter_curation.py
-  python3 paramgen/parameter_curation.py ${FACTOR_DIR}/factor_table/ /home/user/params/
+
+  if [ "$SCALE_FACTOR" = "0.1" ]; then
+    ## Adjust the random parameter ratio for small scale factors
+    sed -i 's/final_first_items = search_params\.generate(first_array, 0\.01)/final_first_items = search_params.generate(first_array, 0.3)/' ./paramgen/parameter_curation.py
+  fi
+
+  sed -i 's|chunks = np.array_split(neighbors_df, query_parallelism)|indices = np.array_split(neighbors_df.index, query_parallelism); chunks = [neighbors_df.loc[idx] for idx in indices]|' ./paramgen/parameter_curation.py
+  python3 ./paramgen/parameter_curation.py ${FACTOR_DIR}/factor_table/ /home/user/params/
 else
   echo "Skipping parameter generation..."
 fi
