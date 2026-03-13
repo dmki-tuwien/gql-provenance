@@ -43,9 +43,6 @@ cd gql
 
 For the convenience of running experiments, the datasets used (with updated headers) along with the evaluation parameters are published [here](https://zenodo.org/records/18865136).
 
-## Data Setup
-Instructions for downloading and loading the datasets into a graph database are available [here](./data/README.md).
-
 ## Run Experiments on Neo4j
 1. Build both `pgprov-core` and neo4j `plugin`.
 ```
@@ -56,7 +53,7 @@ mvn clean package
 cd experiments/driver
 mvn clean package
 ```
-3. Set up data following the instructions [here](#data-setup).
+3. Set up data following the instructions [here](./data/README.md).
 4. Update [.env](experiments/.env) file and run experiments for a dataset.
 ```
 cd experiments/

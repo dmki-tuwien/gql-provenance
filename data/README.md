@@ -19,20 +19,25 @@ In this repository, we use the LDBC Finbench and LDBC SNB-BI benchmark datasets.
 | &nbsp;&nbsp;&nbsp;Published in [official site](https://repository.surfsara.nl/datasets/cwi/ldbc-snb-bi#files)       |-   | ✓ | ✓ | ✓ |
 
 # Setup
-## Download and Process Data
+
+## Download Data
+Download the load-ready data and query parameters published [here](https://zenodo.org/records/18865136).
+
+## Load Data
+The [**load**](./load) directory contains scripts for loading the processed CSV datasets into graph databases.
+Currently, we support,
+* [Neo4j](./load/neo4j/README.md)
+
+# Data Preprocessing
+
+The published data were prepared using the following preprocessing pipeline.
 
 The [**download**](./download) directory contains benchmark-specific scripts to:
 * download the datasets
 * update CSV headers when required
 * generate query parameters for evaluation
 
-Detailed instructions are available in 
-* [LDBC Finbench ReadMe](./download/ldbc_finbench/README.md), and 
+Detailed instructions are available in
+* [LDBC Finbench ReadMe](./download/ldbc_finbench/README.md), and
 * [LDBC SNB-BI ReadMe](./download/ldbc_snb/README.md).
-
-
-## Load Data
-The [**load**](./load) directory contains scripts for loading the processed CSV datasets into graph databases.
-Currently, we support,
-* [Neo4j](./load/neo4j/README.md)
 
