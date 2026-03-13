@@ -56,7 +56,7 @@ mvn clean package
 cd experiments/driver
 mvn clean package
 ```
-3. Set up data following the instructions (here)[#data-setup].
+3. Set up data following the instructions [here](#data-setup).
 4. Update [.env](experiments/.env) file and run experiments for a dataset.
 ```
 cd experiments/
