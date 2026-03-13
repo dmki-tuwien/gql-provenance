@@ -51,20 +51,18 @@ Instructions for downloading and loading the datasets into a graph database are 
 ```
 mvn clean package
 ```
-
 2. Build the experiments driver.
 ```
 cd experiments/driver
 mvn clean package
 ```
-
-3. Update [.env](experiments/.env) file and run experiments for a dataset.
+3. Set up data following the instructions (here)[#data-setup].
+4. Update [.env](experiments/.env) file and run experiments for a dataset.
 ```
 cd experiments/
 .\test_ne04j.sh
 ```
-
-4. Experiment results are saved as CSV files in `result/metrics/${TEST_RUN}`.
+5. Experiment results are saved as CSV files in `result/metrics/${TEST_RUN}`.
 
 ## Use PGProv on Neo4j
 
