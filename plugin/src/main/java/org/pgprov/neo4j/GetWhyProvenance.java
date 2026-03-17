@@ -63,7 +63,7 @@ public class GetWhyProvenance {
         System.out.println("SQL AST: " + processor.getSQLAST().toString(0));
         Result result = tx.execute(updatedQuery, params);
 
-        Grouper<Map<String, Object>,List<List<String>>, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new, findMinimal);
+        Grouper<Map<String, Object>,List<List<String>>, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new);
         return grouper.process(result.stream()).map(row-> new Row(row.getResult(), row.getProv()));
     }
 
@@ -82,11 +82,6 @@ public class GetWhyProvenance {
 
         public InternalRow(Map<String, Object> row, SQLNode sqlNode) {
             super(row, sqlNode);
-        }
-
-        @Override
-        public Set<Set<String>> collectEdgeSubset(Object row) {
-            return Helper.collectEdgeSubset((Map<String, Object>) row);
         }
 
         @Override
