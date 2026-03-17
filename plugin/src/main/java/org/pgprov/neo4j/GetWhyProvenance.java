@@ -40,7 +40,7 @@ public class GetWhyProvenance {
      */
     @Procedure(name = "org.pgprov.getWhyProvenance")
     @Description("Get the why-provenance of a query result.")
-    public Stream<Row> getWhyProvenance(@Name("query") String query, @Name("params") Map<String, Object> params, @Name("findMinimal") Boolean findMinimal ) throws Exception {
+    public Stream<Row> getWhyProvenance(@Name("query") String query, @Name("params") Map<String, Object> params ) throws Exception {
 
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);
