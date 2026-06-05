@@ -77,5 +77,8 @@ cd experiments/
    1. Cost breakdown as percentages
    2. Cost breakdown in absolute values
    3. Comparison between executions of rewritten query, phase 3 (provenance decoding) and original query
-3. [Comparison with SPARQL work (NPCS)](./experiments/results/analysis/Comparison_with_SPARQL_Work.ipynb)
+3. [Provenance Output Analysis](./experiments/results/analysis/Provenance_Output_Analysis.ipynb)
+   1. Percentage reduction in witness size across scale factors and datasets
+   2. Percentage reduction in witness size (fine-grained vs coarse) against query size
+4. [Comparison with SPARQL work (NPCS)](./experiments/results/analysis/Comparison_with_SPARQL_Work.ipynb)
 
