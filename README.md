@@ -70,7 +70,11 @@ cd experiments/
 ## Experiment Results
 
 1. [Provenance Overhead Analysis](./experiments/results/analysis/PGProv_Provenance_Overhead_Analysis.ipynb)
-   2. Execution times of provenance computation
-   3. Absolute provenance overhead
-   4. Percentage provenance overhead
+   1. Execution times of provenance computation
+   2. Absolute provenance overhead
+   3. Percentage provenance overhead
+2. [Cost Breakdown of Provenance Query Execution](./experiments/results/analysis/Cost_Breakdown.ipynb)
+   1. Cost breakdown as percentages
+   2. Cost breakdown in absolute values
+   3. Comparison between executions of rewritten query, phase 3 (provenance decoding) and original query
 
