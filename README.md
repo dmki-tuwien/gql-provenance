@@ -77,4 +77,5 @@ cd experiments/
    1. Cost breakdown as percentages
    2. Cost breakdown in absolute values
    3. Comparison between executions of rewritten query, phase 3 (provenance decoding) and original query
+3. [Comparison with SPARQL work (NPCS)](./experiments/results/analysis/Comparison_with_SPARQL_Work.ipynb)
 
