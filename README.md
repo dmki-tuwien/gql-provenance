@@ -80,5 +80,6 @@ cd experiments/
 3. [Provenance Output Analysis](./experiments/results/analysis/Provenance_Output_Analysis.ipynb)
    1. Percentage reduction in witness size across scale factors and datasets
    2. Percentage reduction in witness size (fine-grained vs coarse) against query size
+   3. Witnesses per result before and after edge minimality execution
 4. [Comparison with SPARQL work (NPCS)](./experiments/results/analysis/Comparison_with_SPARQL_Work.ipynb)
 
