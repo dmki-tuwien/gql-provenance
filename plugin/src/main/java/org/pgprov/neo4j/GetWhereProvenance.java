@@ -47,7 +47,7 @@ public class GetWhereProvenance {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
 
         GQLParser parser = new GQLParser(tokenStream);
-        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION);
+        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION,  Globals.ProvenanceLevel.FINE_GRAINED);
         ParseTree tree = parser.statementBlock();
 
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -62,7 +62,7 @@ public class GetWhereProvenance {
         System.out.println("SQL AST: " + processor.getSQLAST());
         Result result = tx.execute(updatedQuery, params);
 
-        Grouper<Map<String, Object>,Map<String, Set<Object>>, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new);
+        Grouper<Map<String, Object>,Map<String, Set<Object>>, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new, false);
         return grouper.process(result.stream()).map(row-> new GetWhereProvenance.Row(row.getResult(), row.getProv()));
     }
 

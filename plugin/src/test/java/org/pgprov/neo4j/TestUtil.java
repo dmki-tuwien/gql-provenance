@@ -208,8 +208,8 @@ public class TestUtil {
                     actualSet.add(mapper.valueToTree(recordMap));
                 }
 
-                System.out.println(testValue);
-                System.out.println(actualSet);
+                System.out.println("Test : "+testValue);
+                System.out.println("Actual : "+actualSet);
 
                 JSONAssert.assertEquals(actualSet.toString(), testValue.toString(), JSONCompareMode.LENIENT);
             } catch (JSONException e) {

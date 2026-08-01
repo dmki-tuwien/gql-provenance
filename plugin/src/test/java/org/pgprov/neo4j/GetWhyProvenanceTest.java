@@ -30,9 +30,11 @@ public class GetWhyProvenanceTest {
                                 + "MERGE (p3:Person {name: 'Charlie', age: 35, __n: 'n1003', __k_name: 'k2003', __k_age: 'k3003', __l_Person: 'l4003'})\n"
                                 + "MERGE (p4:Person {name: 'Dan', age: 15, __n: 'n1004', __k_name: 'k2004', __k_age: 'k3004', __l_Person: 'l4004'})\n"
                                 + "MERGE (p5:Person {name: 'Evan', __n: 'n1005', __k_name: 'k2005', __l_Person: 'l4005'})\n"
-                                + "MERGE (p4)-[t3:Transfer {amount: 800, __l_Transfer: 'l5003', __k_amount: 'k6003', __e: 'e7003'}]->(p5)\n"
+                                + "MERGE (p2)-[t3:Transfer {amount: 800, __l_Transfer: 'l5003', __k_amount: 'k6003', __e: 'e7003'}]->(p2)\n"
                                 + "MERGE (p1)-[t1:Transfer {amount: 1000, __l_Transfer: 'l5001', __k_amount: 'k6001', __e: 'e7001'}]->(p2)\n"
-                                + "MERGE (p2)-[t2:Transfer {amount: 1500, __l_Transfer: 'l5002', __k_amount: 'k6002', __e: 'e7002'}]->(p3)"
+                                + "MERGE (p2)-[t2:Transfer {amount: 1500, __l_Transfer: 'l5002', __k_amount: 'k6002', __e: 'e7002'}]->(p3)\n"
+                                + "MERGE (p1)-[t:Transfer {amount: 1500, __l_Transfer: 'l5002', __k_amount: 'k6002', __e: 'e7002'}]->(p4)\n"
+                                + "MERGE (p4)-[t2:Transfer {amount: 1500, __l_Transfer: 'l5002', __k_amount: 'k6002', __e: 'e7002'}]->(p3)"
                 )
                 .build();
 

@@ -33,6 +33,11 @@ public class Globals {
         INDIVIDUAL_QUERY_PROCESS
     }
 
+    public enum ProvenanceLevel {
+        COARSE,
+        FINE_GRAINED
+    }
+
     public enum ProvenanceType {
         WHY_PROV,
         WHERE_PROV,

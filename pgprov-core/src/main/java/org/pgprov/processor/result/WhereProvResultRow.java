@@ -9,11 +9,11 @@ import java.util.stream.Collectors;
 public abstract class WhereProvResultRow<S> extends ResultRow<S,Map<String, Set<Object>>> {
 
     public WhereProvResultRow(S row, SQLNode sqlNode) {
-        super(row, sqlNode);
+        super(row, sqlNode, false);
     }
 
     @Override
-    public Map<String, Set<Object>> calculateProvenance(Map<String, Object> row) {
+    public Map<String, Set<Object>> calculateProvenance(Map<String, Object> row, boolean edgeMinimality) {
         Map<String, Set<Object>> provenance = new HashMap<>();
         for(Map.Entry<String, Object> entry : row.entrySet()) {
             if(entry.getKey().startsWith(Globals.VAR_PREFIX) || entry.getKey().startsWith(Globals.PATH_PREFIX)) {
@@ -29,7 +29,7 @@ public abstract class WhereProvResultRow<S> extends ResultRow<S,Map<String, Set<
     }
 
     @Override
-    public void mergeProvenance (ResultRow<S, Map<String, Set<Object>>> otherRow) {
+    public void mergeProvenance (ResultRow<S, Map<String, Set<Object>>> otherRow, boolean edgeMinimality) {
 
         Set<String> otherProv = otherRow.getProv().keySet();
         for(String provKey: otherProv){

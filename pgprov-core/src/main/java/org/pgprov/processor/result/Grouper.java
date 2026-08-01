@@ -14,10 +14,12 @@ public class Grouper<S, T, R extends ResultRow<S, T>> {
     // R : Provenance Result Row Type
     private final SQLNode sqlNode;
     private final BiFunction<S, SQLNode, R> rowFactory;
+    private final boolean edgeMinimality;
 
-    public Grouper(SQLNode ast, BiFunction<S, SQLNode, R> rowFactory) {
+    public Grouper(SQLNode ast, BiFunction<S, SQLNode, R> rowFactory, boolean edgeMinimality) {
         this.sqlNode = ast;
         this.rowFactory = rowFactory;
+        this.edgeMinimality = edgeMinimality;
     }
 
     public Stream<R> process(Stream<S> resultStream) {
@@ -25,19 +27,26 @@ public class Grouper<S, T, R extends ResultRow<S, T>> {
         Map<Integer, R> grouped = new LinkedHashMap<>();
 
         resultStream
-                .map(row -> rowFactory.apply(row, sqlNode))
+                .map(row -> handleRow(row, sqlNode))
                 .forEach(row -> {
                     int key = row.hashCode();
                     grouped.merge(
                             key,
                             row,
                             (existing, incoming) -> {
-                                existing.mergeProvenance(incoming);
+                                existing.mergeProvenance(incoming, this.edgeMinimality);
                                 return existing;
                             }
                     );
                 });
 
         return grouped.values().stream();
+    }
+
+    private R handleRow(S row, SQLNode sqlNode) {
+        Map<String, Object> rowContext = new LinkedHashMap<>();
+        rowContext.put("row", row);
+        rowContext.put("edgeMinimality", this.edgeMinimality);
+        return rowFactory.apply((S) rowContext, sqlNode);
     }
 }

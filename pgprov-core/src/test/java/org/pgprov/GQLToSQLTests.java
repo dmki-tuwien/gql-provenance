@@ -20,7 +20,7 @@ public class GQLToSQLTests {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
 
         GQLParser parser = new GQLParser(tokenStream);
-        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION);
+        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION,  Globals.ProvenanceLevel.FINE_GRAINED);
         ParseTree tree = parser.statementBlock();
 
         System.out.println(tree.toStringTree(parser));

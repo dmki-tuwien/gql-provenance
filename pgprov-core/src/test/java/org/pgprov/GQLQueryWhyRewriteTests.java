@@ -20,7 +20,7 @@ public class GQLQueryWhyRewriteTests {
     private final Globals.ProvenanceType model = Globals.ProvenanceType.WHY_PROV;
     private GQLQueryProcessor getProcessorAtTranslationStage(GQLParser parser, CommonTokenStream tokenStream, ParseTree tree) {
 
-        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION);
+        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION, Globals.ProvenanceLevel.FINE_GRAINED);
         System.out.println(tree.toStringTree(parser));
         ParseTreeWalker.DEFAULT.walk(processor, tree);
         return processor;
@@ -28,7 +28,20 @@ public class GQLQueryWhyRewriteTests {
 
     @Test
     public void testSimpleQuery() {
-        final String query = "MATCH (n:Person)-[]->(x) RETURN n, n.name";
+        final String query = "PROFILE MATCH\n" +
+                "(tag:Tag {name: 'Live_at_the_Witch_Trials'}),\n" +
+                "(person1:Person)<-[:HAS_CREATOR]-(message1:Message)-[:REPLY_OF]->{0,}(post1:Post)<-[:CONTAINER_OF]-(forum1:Forum),\n" +
+                "(message1)-[:HAS_TAG]->(tag),\n" +
+                "(forum1)<-[:HAS_MEMBER]->(person2:Person)<-[:HAS_CREATOR]-(comment:Comment)-[:HAS_TAG]->(tag),\n" +
+                "(forum1)<-[:HAS_MEMBER]->(person3:Person)<-[:HAS_CREATOR]-(message2:Message),\n" +
+                "(comment)-[:REPLY_OF]->(message2)-[:REPLY_OF]->{0,}(post2:Post)<-[:CONTAINER_OF]-(forum2:Forum)\n" +
+                "MATCH (comment)-[:HAS_TAG]->(tag)\n" +
+                "MATCH (message2)-[:HAS_TAG]->(tag)\n" +
+                "WHERE forum1 <> forum2\n" +
+                "AND message2.creationDate > message1.creationDate + duration({hours: 16})\n" +
+                "RETURN DISTINCT person1.id, message2 AS messageCount\n" +
+                "ORDER BY messageCount DESC, person1.id ASC\n" +
+                "LIMIT 10";
 
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);
@@ -51,7 +64,24 @@ public class GQLQueryWhyRewriteTests {
 
     @Test
     public void testSimpleQueryWithOrderBy() {
-        final String query = "MATCH (n:Person)-[s]->(x) RETURN n, n.name AS name ORDER BY name";
+        final String query = "MATCH\n" +
+                "(country1:Country {name: 'Mexico'})<-[:IS_PART_OF]-(city1:City)<-[:IS_LOCATED_IN]-(person1:Person),\n" +
+                "(country2:Country {name: 'Vietnam'})<-[:IS_PART_OF]-(city2:City)<-[:IS_LOCATED_IN]-(person2:Person),\n" +
+                "(person1)-[:KNOWS]-(person2)\n" +
+                "MATCH (person1)<-[:HAS_CREATOR]-(c:Comment)-[:REPLY_OF]->(:Message)-[:HAS_CREATOR]->(person2)\n" +
+                "MATCH (person1)<-[:HAS_CREATOR]-(m:Message)<-[:REPLY_OF]-(:Comment)-[:HAS_CREATOR]->(person2)\n" +
+                "ORDER BY\n" +
+                "city1.name ASC,\n" +
+                "person1.id ASC,\n" +
+                "person2.id ASC\n" +
+                "RETURN\n" +
+                "person1.id AS person1Id,\n" +
+                "person2.id AS person2Id,\n" +
+                "city1.name\n" +
+                "ORDER BY\n" +
+                "person1Id ASC,\n" +
+                "person2Id ASC\n" +
+                "LIMIT 100";
 
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);
@@ -76,7 +106,7 @@ public class GQLQueryWhyRewriteTests {
 
     @Test
     public void testSimpleQueryWithMissingVariable() {
-        final String query = "MATCH (n:Person)-[:LANE]->() RETURN n, n.name";
+        final String query = "MATCH (n:Person)-[z:LANE]->(m) WHERE (m: Company) AND m.name = 'Alice' RETURN n, n.name";
 
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);
@@ -685,7 +715,13 @@ public class GQLQueryWhyRewriteTests {
 
     @Test
     public void testPathsWithRepetitions() {
-        final String query = "MATCH (n:Person)-[:LANE]->{0,5}() RETURN n, n.name";
+        final String query = "MATCH\n" +
+                "(loan:LOAN {id: $ID})-[edge1:DEPOSIT]->(src:ACCOUNT),\n" +
+                "p=(src)-[edge234:TRANSFER|WITHDRAW]->{1,3}(dst:ACCOUNT)\n" +
+                "WHERE // enforce that the timestamps of edge1 and all edge234 edges are within the selected window\n" +
+                "$START_TIME < edge1.createTime < $END_TIME\n" +
+                "RETURN dst.id AS dstId, loan.loanAmount AS loanAmount\n" +
+                "ORDER BY loanAmount DESC;";
 
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);

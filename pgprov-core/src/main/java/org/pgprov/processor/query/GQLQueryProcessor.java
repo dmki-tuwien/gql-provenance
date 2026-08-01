@@ -28,10 +28,13 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
     private final TokenStreamRewriter rewriter;
     private Globals.ProcessStage processStage;
+    private Globals.ProvenanceLevel provLevel;
     private int counter = 0;
     private int varCounter = 0;
     private final Set<String> schemasAndsignatures = new HashSet<>();
     private final Set<String> labelsSignature = new HashSet<>();
+    private final Set<String> whereClauseLabelsSignature = new HashSet<>();
+    private final HashMap<String, String> variableMap = new HashMap<>();
     private final Set<String> varsInMatchClause = new HashSet<>();
     private boolean enterNextStatement = false;
     private GQLParser.PathFactorContext repetitivePathFactorContext = null;
@@ -45,10 +48,11 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     private ParserRuleContext preStatementContext = null;
     private final List<ParserRuleContext> storedPreStatements = new ArrayList<>();
 
-    public GQLQueryProcessor(CommonTokenStream tokens, Globals.ProcessStage processStage) {
+    public GQLQueryProcessor(CommonTokenStream tokens, Globals.ProcessStage processStage, Globals.ProvenanceLevel provLevel) {
 
         this.processStage = processStage;
         this.rewriter = new TokenStreamRewriter(tokens);
+        this.provLevel = provLevel;
     }
 
     public SQLNode getSQLAST() {
@@ -724,14 +728,30 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                     if(i==pathPatternContexts.size()) {
                         schema = new HashSet<>(schemasAndsignatures);
                         schemasAndsignatures.clear();
+
+                        for(String labelItem: whereClauseLabelsSignature){
+                            if(variableMap.containsKey(labelItem.split("_")[0])){
+                                schema.add(variableMap.get(labelItem.split("_")[0])+labelItem);
+                            }
+                        }
+                        variableMap.clear();
                     }
+
                     from = new SQLJoin(new SQLEmptyNode(), sqlNodes.get(pathPatternContext), schema, false);
                 } else {
                     Set<String> schema = null;
                     if(i==pathPatternContexts.size()) {
                         schema = new HashSet<>(schemasAndsignatures);
                         schemasAndsignatures.clear();
+
+                        for(String labelItem: whereClauseLabelsSignature){
+                            if(variableMap.containsKey(labelItem.split("_")[0])){
+                                schema.add(variableMap.get(labelItem.split("_")[0])+labelItem);
+                            }
+                        }
+                        variableMap.clear();
                     }
+
                     from = new SQLJoin(from, sqlNodes.get(pathPatternContext), schema, false);
                 }
             }
@@ -813,7 +833,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void enterNodePattern(GQLParser.NodePatternContext ctx) {
 
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {//changed
+        if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE)) && provLevel.equals(Globals.ProvenanceLevel.FINE_GRAINED) ) {//changed
             GQLParser.ElementPatternFillerContext patternFiller = ctx.elementPatternFiller();
             boolean storeAllVariables = processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE);
             processPatternFiller(patternFiller, Globals.NODE_ANNOT_PREFIX, storeAllVariables);
@@ -823,7 +843,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void enterEdgePattern(GQLParser.EdgePatternContext ctx) {
 
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) { //changed
+        if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE)) && provLevel.equals(Globals.ProvenanceLevel.FINE_GRAINED) ) { //changed
             if (ctx.fullEdgePattern() != null) {
                 GQLParser.ElementPatternFillerContext patternFiller;
                 if (ctx.fullEdgePattern().fullEdgePointingLeft() != null) {
@@ -861,6 +881,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
 
                 schemasAndsignatures.add(tempVar);
                 labelsSignature.add(tempVar);
+
                 sqlNodes.put(ctx, new SQLRelationNode(newVar, new HashSet<>(varsInMatchClause), new HashSet<>(schemasAndsignatures), new HashSet<>(labelsSignature)));
             } else {
                 String varName = ctx.pathVariableDeclaration().pathVariable().getText();
@@ -891,7 +912,7 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
     @Override
     public void enterValueExpressionPrimary(GQLParser.ValueExpressionPrimaryContext ctx) {
 
-        if (processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE) ) {
+        if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE)) && provLevel.equals(Globals.ProvenanceLevel.FINE_GRAINED)) {
             // add properties referenced in other clauses than MATCH
             if (ctx.propertyName() != null && ctx.valueExpressionPrimary() != null && ctx.valueExpressionPrimary().bindingVariableReference() != null) {
 
@@ -901,57 +922,84 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
         }
     }
 
-    private void processPatternFiller(GQLParser.ElementPatternFillerContext patternFiller, String patternType, boolean storeAllVariables) {
+    @Override
+    public void enterLabeledPredicate(GQLParser.LabeledPredicateContext ctx){
+        //Expected to enter with WHERE clauses only
+        if ((processStage.equals(Globals.ProcessStage.SQL_TRANSLATION) || processStage.equals(Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE)) && provLevel.equals(Globals.ProvenanceLevel.FINE_GRAINED)) {
+            if (ctx.elementVariableReference() != null && ctx.labeledPredicatePart2() != null) {
 
-        GQLParser.IsLabelExpressionContext labelsCtx = patternFiller.isLabelExpression();
-        GQLParser.ElementPatternPredicateContext predicate = patternFiller.elementPatternPredicate();
+                String varName = ctx.elementVariableReference().getText();
 
-        if (labelsCtx != null || predicate != null) {
+                List<String> labels = getLabelName(ctx.labeledPredicatePart2().labelExpression());
 
-            String varName;
-            String prefix = repetitivePathFactorContext != null? Globals.TEMP_VAR_LIST_PREFIX: Globals.TEMP_VAR_PREFIX;
-            if (patternFiller.elementVariableDeclaration() != null) {
-                varName = patternFiller.elementVariableDeclaration().elementVariable().getText();
-                varsInMatchClause.add(varName);
+                for (String lbl : labels) {
 
-            } else {
-                // add missing variables to pattern
-                varName = Globals.ANONYMOUS_VAR_PREFIX + varCounter++;
-                this.rewriter.insertBefore(patternFiller.getStart(), varName);
-            }
-
-            if(storeAllVariables) {
-                schemasAndsignatures.add(prefix + varName);
-            }
-
-            // add labels to variable schema
-            if (labelsCtx != null) {
-                List<String> nodeLabels = getLabelName(labelsCtx.labelExpression());
-                for (String lbl : nodeLabels) {
-                    labelsSignature.add(prefix+  patternType+ varName+Globals.LBL_ANNOT_KEY_PREFIX + lbl);
+                    whereClauseLabelsSignature.add(varName + Globals.LBL_ANNOT_KEY_PREFIX + lbl);
                 }
             }
+        }
 
-            varName = prefix + varName;
+    }
 
-            // add properties to variable schema from property specification
-            if (predicate != null) {
-                if (predicate.elementPropertySpecification() != null) {
-                    List<GQLParser.PropertyKeyValuePairContext> propertyKeyValuePairs = predicate.elementPropertySpecification().propertyKeyValuePairList().propertyKeyValuePair();
+    private void processPatternFiller(GQLParser.ElementPatternFillerContext patternFiller, String patternType, boolean storeAllVariables) {
 
-                    for (GQLParser.PropertyKeyValuePairContext keyValuePair : propertyKeyValuePairs) {
-                        schemasAndsignatures.add(varName+Globals.PROP_ANNOT_KEY_PREFIX + keyValuePair.propertyName().getText());
+        if(this.provLevel.equals(Globals.ProvenanceLevel.FINE_GRAINED)) {
+            GQLParser.IsLabelExpressionContext labelsCtx = patternFiller.isLabelExpression();
+            GQLParser.ElementPatternPredicateContext predicate = patternFiller.elementPatternPredicate();
+
+            if (labelsCtx != null || predicate != null) {
+
+                String varName;
+                String prefix = repetitivePathFactorContext != null ? Globals.TEMP_VAR_LIST_PREFIX : Globals.TEMP_VAR_PREFIX;
+                if (patternFiller.elementVariableDeclaration() != null) {
+                    varName = patternFiller.elementVariableDeclaration().elementVariable().getText();
+                    varsInMatchClause.add(varName);
+                    variableMap.put(varName, prefix + patternType);
+
+                } else {
+                    // add missing variables to pattern
+                    varName = Globals.ANONYMOUS_VAR_PREFIX + varCounter++;
+                    this.rewriter.insertBefore(patternFiller.getStart(), varName);
+                }
+
+                if (storeAllVariables) {
+                    schemasAndsignatures.add(prefix + varName);
+                }
+                // add labels to variable schema
+                if (labelsCtx != null) {
+                    List<String> nodeLabels = getLabelName(labelsCtx.labelExpression());
+
+                    for (String lbl : nodeLabels) {
+                        //In return statement need to add label annotations. PatternType is necessary to distinguish between the node and edge labels
+                        labelsSignature.add(prefix + patternType + varName + Globals.LBL_ANNOT_KEY_PREFIX + lbl);
                     }
                 }
 
-            }
-        } else if (patternFiller.elementVariableDeclaration() != null) {
-            String varName = patternFiller.elementVariableDeclaration().elementVariable().getText();
-            varsInMatchClause.add(varName);
 
-            if(storeAllVariables) {
-                String prefix = repetitivePathFactorContext != null? Globals.TEMP_VAR_LIST_PREFIX : Globals.TEMP_VAR_PREFIX ;
-                schemasAndsignatures.add( prefix + varName);
+                varName = prefix + varName;
+
+                // add properties to variable schema from property specification
+                if (predicate != null) {
+                    if (predicate.elementPropertySpecification() != null) {
+                        List<GQLParser.PropertyKeyValuePairContext> propertyKeyValuePairs = predicate.elementPropertySpecification().propertyKeyValuePairList().propertyKeyValuePair();
+
+                        for (GQLParser.PropertyKeyValuePairContext keyValuePair : propertyKeyValuePairs) {
+
+                            schemasAndsignatures.add(varName + Globals.PROP_ANNOT_KEY_PREFIX + keyValuePair.propertyName().getText());
+                        }
+                    }
+
+                }
+            } else if (patternFiller.elementVariableDeclaration() != null) {
+                String varName = patternFiller.elementVariableDeclaration().elementVariable().getText();
+                varsInMatchClause.add(varName);
+
+                String prefix = repetitivePathFactorContext != null ? Globals.TEMP_VAR_LIST_PREFIX : Globals.TEMP_VAR_PREFIX;
+                variableMap.put(varName, prefix + patternType);
+
+                if (storeAllVariables) {
+                    schemasAndsignatures.add(prefix + varName);
+                }
             }
         }
     }

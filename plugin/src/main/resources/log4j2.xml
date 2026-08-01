@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+
+    <!-- Define appenders (where logs go) -->
+    <Appenders>
+
+        <!-- File appender for your procedure -->
+        <File name="MyProcedureFile" fileName="logs/why_provenance.log" append="true">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} | %logger{36} | %msg%n"/>
+        </File>
+
+        <!-- Optional console output -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+    </Appenders>
+
+    <!-- Define loggers -->
+    <Loggers>
+
+        <!-- Custom logger for your procedure -->
+        <Logger name="pgprov.why_prov" level="info" additivity="false">
+            <AppenderRef ref="MyProcedureFile"/>
+        </Logger>
+
+        <!-- Root logger (optional, you can keep Neo4j defaults) -->
+        <Root level="warn">
+            <AppenderRef ref="Console"/>
+        </Root>
+
+    </Loggers>
+
+</Configuration>

@@ -47,7 +47,7 @@ public class GetHowProvenance {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
 
         GQLParser parser = new GQLParser(tokenStream);
-        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION);
+        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION, Globals.ProvenanceLevel.FINE_GRAINED);
         ParseTree tree = parser.statementBlock();
 
         ParseTreeWalker.DEFAULT.walk(processor, tree);
@@ -60,7 +60,7 @@ public class GetHowProvenance {
         System.out.println("SQL AST: " + processor.getSQLAST().toString(0));
         Result result = tx.execute(updatedQuery, params);
 
-        Grouper<Map<String, Object>, String, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new);
+        Grouper<Map<String, Object>, String, InternalRow> grouper = new Grouper<>(processor.getSQLAST(), InternalRow::new, false);
         return grouper.process(result.stream()).map(row-> new GetHowProvenance.Row(row.getResult(), row.getProv()));
     }
 

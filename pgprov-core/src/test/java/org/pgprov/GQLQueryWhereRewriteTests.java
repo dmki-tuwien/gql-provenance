@@ -23,7 +23,7 @@ public class GQLQueryWhereRewriteTests {
     private final Globals.ProvenanceType model = Globals.ProvenanceType.WHERE_PROV;
     private GQLQueryProcessor getProcessorAtTranslationStage(GQLParser parser, CommonTokenStream tokenStream, ParseTree tree) {
 
-        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE);
+        GQLQueryProcessor processor = new GQLQueryProcessor(tokenStream, Globals.ProcessStage.SQL_TRANSLATION_WHERE_PROVENANCE, Globals.ProvenanceLevel.FINE_GRAINED);
         System.out.println(tree.toStringTree(parser));
         ParseTreeWalker.DEFAULT.walk(processor, tree);
         return processor;
