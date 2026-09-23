@@ -63,9 +63,13 @@ cd experiments/
 
 ## Use PGProv on Neo4j
 
-1. Place the plugin in `plugin\target` inside the `plugins` folder of neo4j and start your Neo4J database
+1. Place the plugin in `plugin\target` inside the `plugins` folder of neo4j. 
 
-2. You may use `org.pgprov.getWhyProvenance(query, params)` procedure to compute provenance for query results of a given query.
+2. Add `org.pgprov.*` to the neo4j configuration `dbms.security.procedures.unrestricted` in `neo4j.conf` and start your Neo4J database.
+   
+3. Confirm that the procedures are registered with `SHOW PROCEDURES YIELD name WHERE name STARTS WITH "org.pgprov" RETURN name;`.
+
+4. You may use `org.pgprov.getWhyProvenance(query, params)` procedure to compute provenance for query results of a given query.
 
 ## Experiment Results
 
