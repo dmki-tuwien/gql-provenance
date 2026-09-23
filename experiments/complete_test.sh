@@ -9,8 +9,11 @@ CONFIGS=(
   "finbench 0.3"
   "finbench 1"
   "finbench 3"
+  "finbench 10"
   "snb 1"
   "snb 3"
+  "snb 10"
+  "watdiv 10"
 )
 
 ENV_TEMPLATE=".env_tmp"

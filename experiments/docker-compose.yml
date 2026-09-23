@@ -26,7 +26,9 @@ services:
       NEO4J_server_threads_worker__count: 40
     volumes:
       - ./neo4j/setup/plugins:/var/lib/neo4j/plugins
+      - ./neo4j/setup/conf:/var/lib/neo4j/conf
       - ./neo4j/setup/scripts:/scripts
+      - ./result/phase_metrics:/logs
       - ${PERSIST_DB_DIR}:/var/lib/neo4j/data
       - ${PARAMS_DIR}:/import
   test-driver:

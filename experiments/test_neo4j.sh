@@ -11,9 +11,13 @@ sed -e "s|{{DATASET}}|$DATASET|g" \
 
 mkdir -p neo4j/setup/plugins/
 mkdir -p neo4j/setup/scripts/
+mkdir -p neo4j/setup/conf/
 cp -r ../data/load/neo4j/setup/scripts/* neo4j/setup/scripts/
 
+docker compose exec --user root neo4j sh -c "/scripts/fix_access_rights.sh"
+
 cp ../plugin/target/pgprov-neo4j-plugin-1.0.jar neo4j/setup/plugins/
+cp ../plugin/src/main/resources/log4j2.xml neo4j/setup/conf/
 
 docker compose up -d
 
@@ -43,6 +47,8 @@ docker compose exec --user root test-driver sh -c "/app/scripts/setup.sh"
 echo "Start experiments"
 
 docker compose exec test-driver sh -c "java -jar app.jar"
+
+docker compose exec --user root neo4j sh -c "/scripts/fix_access_rights.sh"
 
 docker compose exec --user root test-driver sh -c "/app/scripts/setup.sh"
 
