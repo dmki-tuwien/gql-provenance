@@ -1,8 +1,6 @@
 //snb-1
 MATCH (message:Message)
   WHERE message.creationDate < $date
-MATCH (message:Message)
-  WHERE message.creationDate < $date
   AND message.content IS NOT NULL
 RETURN
   message.length AS mlength,
@@ -132,20 +130,20 @@ messageCount DESC,
 person.id ASC
 LIMIT 100
 
-//snb-10
-MATCH (startPerson:Person {id: $personIdT})
-MATCH (startPerson)-[:IS_LOCATED_IN]->(:City)-[:IS_PART_OF]->(:Country {name: $country}),
-(startPerson)<-[:HAS_CREATOR]-(message:Message)-[:HAS_TAG]->(:Tag)-[:HAS_TYPE]->
-(:TagClass {name: $tagClass})
-MATCH (message)-[:HAS_TAG]->(tag:Tag)
-RETURN DISTINCT startPerson.id,
-tag.name,
-message AS messageCount
-ORDER BY
-messageCount DESC,
-tag.name ASC,
-startPerson.id ASC
-LIMIT 100
+ //snb-10
+ MATCH (startPerson:Person {id:$personIdT})-[:KNOWS]->{3, 4}(expertCandidate)
+ MATCH (expertCandidate)-[:IS_LOCATED_IN]->(:City)-[:IS_PART_OF]->(:Country {name: $country}),
+ (expertCandidate)<-[:HAS_CREATOR]-(message:Message)-[:HAS_TAG]->(:Tag)-[:HAS_TYPE]->
+ (:TagClass {name: $tagClass})
+ MATCH (message)-[:HAS_TAG]->(tag:Tag)
+ RETURN DISTINCT expertCandidate.id,
+ tag.name,
+ message AS messageCount
+ ORDER BY
+ messageCount DESC,
+ tag.name ASC,
+ expertCandidate.id ASC
+ LIMIT 100
 
 //snb-11
 MATCH (a:Person)-[:IS_LOCATED_IN]->(:City)-[:IS_PART_OF]->(country:Country {name: $country}),
@@ -162,7 +160,7 @@ WHERE $startDateT <= k3.creationDate AND k3.creationDate <= $endDateT
 RETURN a, country, k1, b, k2, k3
 
 //snb-12
-MATCH (person:PERSON)<-[:HAS_CREATOR]-(message:Message)-[:REPLY_OF]->{0,}(post:Post)
+MATCH (person:Person)<-[:HAS_CREATOR]-(message:Message)-[:REPLY_OF]->{0,}(post:Post)
 WHERE message.content IS NOT NULL
 AND message.length < $lengthThreshold
 AND message.creationDate > $startDateT
@@ -198,8 +196,8 @@ MATCH
 (person1)-[:KNOWS]-(person2)
 MATCH (person1)<-[:HAS_CREATOR]-(c:Comment)-[:REPLY_OF]->(:Message)-[:HAS_CREATOR]->(person2)
 MATCH (person1)<-[:HAS_CREATOR]-(m:Message)<-[:REPLY_OF]-(:Comment)-[:HAS_CREATOR]->(person2)
-MATCH (person1)-[:LIKES]->(m:Message)-[:HAS_CREATOR]->(person2)
-MATCH (person1)<-[:HAS_CREATOR]-(m:Message)<-[:LIKES]-(person2)
+//MATCH (person1)-[:LIKES]->(m:Message)-[:HAS_CREATOR]->(person2)   //These are optional matches according to the specification
+//MATCH (person1)<-[:HAS_CREATOR]-(m:Message)<-[:LIKES]-(person2)  //Transforming them to MATCH creates zero result sizes - hence removed
 ORDER BY
 city1.name ASC,
 person1.id ASC,
@@ -216,19 +214,18 @@ LIMIT 100
 //snb-15
 CALL{
 MATCH (person1:Person)<-[:HAS_CREATOR]-(message1:Message)-[:HAS_TAG]->(tag:Tag {name: $tagA})
-WHERE message1.creationDate = $dateA
+WHERE CAST(message1.creationDate AS DATE) = CAST( $dateA AS DATE)
 // filter out Persons with more than $maxKnowsLimit friends who created the same kind of Message
 MATCH (person1)-[:KNOWS]-(person2:Person)<-[:HAS_CREATOR]-(message2:Message)-[:HAS_TAG]->(tag)
-WHERE message2.creationDate = $dateA
-
+WHERE CAST(message2.creationDate AS DATE) = CAST( $dateA AS DATE)
 // return count
 RETURN person1, message1
 UNION
 MATCH (person1:Person)<-[:HAS_CREATOR]-(message1:Message)-[:HAS_TAG]->(tag:Tag {name: $tagB})
-WHERE message1.creationDate = $dateB
+WHERE CAST(message1.creationDate AS DATE) = CAST( $dateB AS DATE)
 // filter out Persons with more than $maxKnowsLimit friends who created the same kind of Message
 MATCH (person1)-[:KNOWS]-(person2:Person)<-[:HAS_CREATOR]-(message2:Message)-[:HAS_TAG]->(tag)
-WHERE message2.creationDate = $dateB
+WHERE CAST(message2.creationDate AS DATE) = CAST( $dateB AS DATE)
 // return count
 RETURN person1, message1
 }
