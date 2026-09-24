@@ -10,6 +10,7 @@ experiments/driver/target/*
 *.csv
 *.png
 *.iml
+*.log
 dependency-reduced-pom.xml
 
 data/ldbc_finbench/datagen/*

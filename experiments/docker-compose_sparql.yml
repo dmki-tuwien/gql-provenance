@@ -1,0 +1,46 @@
+services:
+  neo4j:
+    image: neo4j:5.25.1
+    container_name: koumudi-neo4j-new
+    tty: true
+    stdin_open: true
+    cpus: 40
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      DATASET: ${DATASET}
+      SCALE_FACTOR: ${SCALE_FACTOR}
+      NEO4J_AUTH: ${USERNAME}/${PASSWORD}
+      NEO4J_PLUGINS: '["apoc", "n10s"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*,org.pgprov.*,n10s.*
+      NEO4J_dbms_security_procedures_allowlist: apoc.*,gds.*,org.pgprov.*,n10s.*
+      NEO4J_apoc_import_file_enabled: "true"
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_server_directories_logs: /logs
+      NEO4J_server_directories_import: /import
+      NEO4J_internal_dbms_tx__log_fail__on__corrupted__log__files: "false"
+      NEO4J_dbms_memory_heap_initial__size : 200G
+      NEO4J_dbms_memory_heap_max__size : 250G
+      NEO4J_dbms_memory_transaction_total_max : 450G
+      NEO4J_server_threads_worker__count: 40
+    volumes:
+      - ./neo4j/setup/plugins:/var/lib/neo4j/plugins
+      - ./neo4j/setup/conf:/var/lib/neo4j/conf
+      - ./neo4j/setup/scripts:/scripts
+      - ./result/phase_metrics:/logs
+      - ${PERSIST_DB_DIR}:/var/lib/neo4j/data
+      - ${PARAMS_DIR}:/import
+  test-driver:
+    build: ./driver
+    image: pgprov-test-driver
+    container_name: koumudi-test-driver
+    volumes:
+      - ${PARAMS_DIR}:/app/params
+      - ./result:/app/result
+      - ./driver/src/main/resources:/app/resources
+      - ./driver/configs/config.properties:/app/config.properties
+      - ./driver/scripts:/app/scripts
+      - ./driver/target/pgprov_test_driver-1.0.jar:/app/app.jar
+    working_dir: /app
+    tty: true
