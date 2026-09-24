@@ -64,11 +64,17 @@ public class App
             for (Map.Entry<String, Pair<String, Map<String, Object>>> query : queryList) {
 
                 String queryParamKey = query.getKey().substring(0, query.getKey().lastIndexOf('_'));
+
+                if(k>0 && (queryParamKey.startsWith("prov_result") || queryParamKey.startsWith("prov_coarse_result")) ){
+                    continue;
+                }
+
+                String paramKey = query.getKey().substring(query.getKey().lastIndexOf('_')+1);
                 Pair<String, Map<String, Object>> queryParamMap = query.getValue();
                 System.out.println("Sending request = "+ queryParamKey+","+queryParamMap.getRight());
 
                 // query execution
-                Pair<Double, Integer> testResults = driver.runTestProcedureQuery(queryParamKey, queryParamMap.getKey(), queryParamMap.getValue());
+                Pair<Double, Integer> testResults = driver.runTestProcedureQuery(paramKey, queryParamKey, queryParamMap.getKey(), queryParamMap.getValue());
 
                 // Cache execTimes
                 if (queryRunTimes.containsKey(query.getKey())) {
@@ -84,7 +90,6 @@ public class App
 //                System.out.println(query.getKey() + ", " + queryParamMap.getValue() + ", " + durationMs);
                 j+=1;
                 if(j%100==0) System.out.println("Execution finished for :"+ j);
-
             }
         }
 
@@ -143,7 +148,7 @@ public class App
                     parameters.put("LIMIT", limit);
 
                     // query execution
-                    Pair<Double, Integer> testResults = driver.runTestProcedureQuery(query.getKey(), queryParamMap.getKey(), parameters);
+                    Pair<Double, Integer> testResults = driver.runTestProcedureQuery("setParam",query.getKey(), queryParamMap.getKey(), parameters);
 
                     // Cache execTimes
                     if (queryRunTimes.containsKey(resultKey)) {
@@ -164,7 +169,6 @@ public class App
                         }
                     }
                     //                System.out.println(query.getKey() + ", " + queryParamMap.getValue() + ", " + durationMs);
-
                 }
             }
 
@@ -280,7 +284,7 @@ public class App
 
                 if(headers.contains(fileParam)) {
                     if (paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "long")) {
-                        recordMap.put(queryParam, Long.parseLong(record.get(fileParam)));
+                        recordMap.put(queryParam, Long.parseLong(record.get(fileParam))/1000);
                     } else if (paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "double")) {
                         recordMap.put(queryParam, Double.parseDouble(record.get(fileParam)));
                     } else if (paramHeaderTypeMap.containsKey(queryParam) && Objects.equals(paramHeaderTypeMap.get(queryParam), "int")) {
@@ -389,7 +393,6 @@ public class App
             }
         });
 
-
         try(Neo4jDbDriver driver = DbDriverFactory.createDriver()){
 
             driver.connect();
@@ -405,17 +408,12 @@ public class App
 
                 Map<String, Pair<String, Map<String,Object>>> finalQueries = driver.generateTestQuerySet(tsrQueries, provModel, paramMap);
                 runExperiments(driver, finalQueries, provModel);
-
                 //driver.clearResults();
             }
-
 //            driver.printResultLengths();
-
         }catch (Exception e){
             System.out.println(e.toString());
             System.exit(1);
         }
-
-
     }
 }
