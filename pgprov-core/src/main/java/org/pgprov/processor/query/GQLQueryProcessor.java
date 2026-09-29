@@ -234,9 +234,9 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                             String origVarName = entry.substring(Globals.TEMP_PATH_PREFIX.length());
 
                             if(origVarName.startsWith(Globals.PATH_PREFIX)){
-                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(r)] AS "+ origVarName);
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(startNode(r))+\"::\"+"+Globals.ID_FUNCTION+"(r)+\"::\"+"+Globals.ID_FUNCTION+"(endNode(r))] AS "+ origVarName);
                             }else{
-                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(r)] AS "+ Globals.PATH_PREFIX + origVarName);
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(startNode(r))+\"::\"+"+Globals.ID_FUNCTION+"(r)+\"::\"+"+Globals.ID_FUNCTION+"(endNode(r))] AS "+ Globals.PATH_PREFIX + origVarName);
                             }
                             getSQLAST().updateWhyProvenanceEncodingVariable(entry, sqlNode);
                          }else if (entry.startsWith(Globals.TEMP_VAR_LIST_PREFIX)) {
@@ -401,9 +401,9 @@ public class GQLQueryProcessor extends GQLBaseListener implements QueryProcessor
                             String origVarName = entry.getValue().substring(Globals.TEMP_PATH_PREFIX.length());
 
                             if(origVarName.startsWith(Globals.PATH_PREFIX)){
-                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(r)] AS "+ Globals.VAR_PREFIX + entry.getKey());
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(startNode(r))+\"::\"+"+Globals.ID_FUNCTION+"(r)+\"::\"+"+Globals.ID_FUNCTION+"(endNode(r))] AS "+ Globals.VAR_PREFIX + entry.getKey());
                             }else{
-                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(r)] AS "+ Globals.VAR_PREFIX + entry.getKey());
+                                this.rewriter.insertAfter(returnStatementCtx.getStop(), ", [x IN nodes("+origVarName+") | "+Globals.ID_FUNCTION+"(x)] + [r IN relationships("+origVarName+") | "+Globals.ID_FUNCTION+"(startNode(r))+\"::\"+"+Globals.ID_FUNCTION+"(r)+\"::\"+"+Globals.ID_FUNCTION+"(endNode(r))] AS "+ Globals.VAR_PREFIX + entry.getKey());
                             }
                             getSQLAST().updateWhyProvenanceEncodingVariable(entry.getKey(), sqlNode);
                         }else if (entry.getValue().startsWith(Globals.TEMP_VAR_LIST_PREFIX)) {

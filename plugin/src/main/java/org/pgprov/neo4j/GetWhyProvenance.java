@@ -39,7 +39,10 @@ public class GetWhyProvenance {
     /**
      * This procedure takes a query and generates the why-provennace annotation for each result concatenates it
      *
-     * @param query The query to generate the provenance polynomial for
+     * @param query The query to compute why provenance for
+     * @param params The parameters that need to be set in the query (if any) + set log: "true" to enable pgprov logging and edgeMinimality: "true" for edge minimal witnesses
+     * @param provLevel The level at which provenance need to be computed : CORASE, FINE_GRAINED (default)
+     *
      * @return Each row in the execution result with its set of why-provenance annotations
      */
     @Procedure(name = "org.pgprov.getWhyProvenance")

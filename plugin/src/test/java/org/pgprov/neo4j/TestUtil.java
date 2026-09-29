@@ -87,14 +87,16 @@ public class TestUtil {
 
             try (Session session = driver.session()) {
 
-                Result all = session.run("MATCH (n) RETURN elementId(n) AS id, n AS ann, \"node\" AS kind " +
+                Result all = session.run("MATCH (n) RETURN '0' AS source, '0' AS target, elementId(n) AS id, n AS ann, \"node\" AS kind " +
                         "UNION ALL " +
-                        "MATCH ()-[r]->() RETURN elementId(r) AS id, r AS ann, \"relationship\" AS kind");
+                        "MATCH ()-[r]->() RETURN elementId(startNode(r)) AS source, elementId(endNode(r)) AS target, elementId(r) AS id, r AS ann, \"relationship\" AS kind");
 
                 while (all.hasNext()) {
                     Record rec = all.next();
 
                     String elementId = rec.get("id").asString();
+                    String src = rec.get("source").asString();
+                    String tgt = rec.get("target").asString();
                     Map<String, String> recordMap =
                             ((Entity)(
                                     rec.get("kind").asString().equals("node")
@@ -110,8 +112,11 @@ public class TestUtil {
                                             e -> {
                                                 String key = e.getKey();
 
-                                                if (key.equals("__n") || key.equals("__e")) {
+                                                if (key.equals("__n")) {
                                                     return elementId;
+                                                }
+                                                if (key.equals("__e")) {
+                                                    return src+"::"+elementId+"::"+tgt;
                                                 }
                                                 if (key.startsWith("__l_")) {
                                                     return elementId + ":" + key.substring(4);
@@ -192,7 +197,7 @@ public class TestUtil {
 
 
 
-                Result record = session.run("CALL org.pgprov.get"+provModel+"Provenance(\""+query+"\" , {})");
+                Result record = session.run("CALL org.pgprov.get"+provModel+"Provenance(\""+query+"\" , { log: 'false', edgeMinimality: 'false'})");
 
                 ArrayNode actualSet = mapper.createArrayNode();
 

@@ -106,7 +106,7 @@ public class GQLQueryWhyRewriteTests {
 
     @Test
     public void testSimpleQueryWithMissingVariable() {
-        final String query = "MATCH (n:Person)-[z:LANE]->(m) WHERE (m: Company) AND m.name = 'Alice' RETURN n, n.name";
+        final String query = "MATCH (n:Person)-[x0:LANE]->(m) WHERE (m: Company) AND m.name = 'Alice' RETURN n, n.name";
 
         CodePointCharStream charStream = CharStreams.fromString(query);
         GQLLexer lexer = new GQLLexer(charStream);
